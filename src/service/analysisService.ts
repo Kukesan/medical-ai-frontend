@@ -8,6 +8,12 @@ export function runDocumentAnalysis(request: AuthRequest, documentIds: string[])
   })
 }
 
+export function analyzeMedicationInteractions(request: AuthRequest) {
+  return request<AnalysisRunResponse>('/analysis/analyze-medication-interactions', {
+    method: 'POST',
+  })
+}
+
 export function getAnalysisResults(request: AuthRequest) {
   return request<AnalysisResultItem[]>('/analysis/results')
 }

@@ -1,5 +1,9 @@
 import type { AuthRequest } from '../context/auth-request'
-import type { ChatHistoryResponse, ChatResponse } from '../types/api'
+import type { ChatHistoryResponse, ChatResponse, ConversationSummary } from '../types/api'
+
+export function getConversations(request: AuthRequest) {
+  return request<ConversationSummary[]>('/consultant/conversations')
+}
 
 export function askChatQuestion(
   request: AuthRequest,

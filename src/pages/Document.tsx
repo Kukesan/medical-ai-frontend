@@ -147,7 +147,7 @@ export function DocumentPage() {
 
         {uploadResult && uploadResult.uploaded.length > 0 ? (
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
-            <span>You can view the analysis report for your uploaded documents on the Analyze page.</span>
+            <span>You can analyze your uploaded documents on the Analyze page.</span>
             <button
               type="button"
               onClick={() => void navigate('/analyze')}

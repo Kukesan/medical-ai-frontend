@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import type { AnalysisResultItem, AnalysisRiskLevel } from '../types/api'
 import { ApiRequestError } from '../lib/ApiRequestError'
 import { useAuth } from '../context/useAuth'
-import { getAnalysisResults } from '../service/analysisService'
+import { analyzeMedicationInteractions, getAnalysisResults } from '../service/analysisService'
 
 const riskOrder: Record<AnalysisRiskLevel, number> = {
   high: 0,
@@ -35,6 +35,8 @@ export function AnalyzePage() {
   const [results, setResults] = useState<AnalysisResultItem[]>([])
   const [status, setStatus] = useState('')
   const [isLoading, setIsLoading] = useState(true)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [analyzeStatus, setAnalyzeStatus] = useState('')
 
   const loadResults = useCallback(async () => {
     setIsLoading(true)
@@ -62,6 +64,26 @@ export function AnalyzePage() {
     void loadResults()
   }, [loadResults])
 
+  const handleAnalyze = useCallback(async () => {
+    setIsAnalyzing(true)
+    setAnalyzeStatus('')
+
+    try {
+      await analyzeMedicationInteractions(request)
+      await loadResults()
+    } catch (error) {
+      if (error instanceof ApiRequestError) {
+        setAnalyzeStatus(`Error ${error.status}: ${error.message}`)
+      } else if (error instanceof Error) {
+        setAnalyzeStatus(error.message)
+      } else {
+        setAnalyzeStatus('Unable to analyze medication interactions.')
+      }
+    } finally {
+      setIsAnalyzing(false)
+    }
+  }, [request, loadResults])
+
   const prioritizedResults = useMemo(() => {
     return [...results].sort((a, b) => {
       const riskDiff = riskOrder[a.risk_level] - riskOrder[b.risk_level]
@@ -84,15 +106,27 @@ export function AnalyzePage() {
             <h1 className="font-['Archivo_Black'] text-2xl text-gray-900">Analysis Reports</h1>
             <p className="mt-1 text-sm text-gray-600">Important findings first. Click a record to inspect full details.</p>
           </div>
-          <button
-            type="button"
-            onClick={() => void loadResults()}
-            disabled={isLoading}
-            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-[#AA1C41] hover:bg-[#FFF1F4] hover:text-[#AA1C41] disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            Refresh
-          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => void handleAnalyze()}
+              disabled={isAnalyzing}
+              className="rounded-lg bg-[#AA1C41] px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#8f1836] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isAnalyzing ? 'Analyzing...' : 'Analyze'}
+            </button>
+            <button
+              type="button"
+              onClick={() => void loadResults()}
+              disabled={isLoading}
+              className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-[#AA1C41] hover:bg-[#FFF1F4] hover:text-[#AA1C41] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Refresh
+            </button>
+          </div>
         </div>
+
+        {analyzeStatus ? <p className="mt-3 text-sm text-red-700">{analyzeStatus}</p> : null}
 
         <div className="mt-4 grid grid-cols-2 gap-2 rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm">
           <p className="text-gray-700">

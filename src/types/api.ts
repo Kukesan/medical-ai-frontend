@@ -132,6 +132,12 @@ export type ChatResponse = {
   }
 }
 
+export type ConversationSummary = {
+  title: string
+  session_id: string
+  updated_at: string
+}
+
 export type ChatHistoryResponse = {
   session_id: string
   messages: Array<{
