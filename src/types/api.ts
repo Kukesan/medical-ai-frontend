@@ -88,18 +88,6 @@ export type AnalysisResultItem = {
   created_at: string
 }
 
-export type TimelineResponse = {
-  timeline: Array<{
-    visit_id: string
-    visit_date: string
-    doctor_name: string
-    hospital_name: string
-    medications: string[]
-    labs: string[]
-    notes: string[]
-  }>
-}
-
 export type LabTrendsResponse = {
   trends: Array<{
     test_name: string

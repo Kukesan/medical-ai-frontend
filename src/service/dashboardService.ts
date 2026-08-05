@@ -1,8 +1,8 @@
 import type { AuthRequest } from '../context/auth-request'
-import type { AlertItem, LabTrendsResponse, TimelineResponse } from '../types/api'
+import type { AlertItem, LabTrendsResponse, TimelineEntry } from '../types/api'
 
 export function getTimeline(request: AuthRequest) {
-  return request<TimelineResponse>('/timeline')
+  return request<TimelineEntry[]>('/timeline')
 }
 
 export function getMedications(request: AuthRequest) {

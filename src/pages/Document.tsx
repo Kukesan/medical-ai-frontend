@@ -145,6 +145,19 @@ export function DocumentPage() {
 
         {status ? <p className="mt-4 text-sm text-gray-700">{status}</p> : null}
 
+        {uploadResult && uploadResult.uploaded.length > 0 ? (
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
+            <span>You can view the analysis report for your uploaded documents on the Analyze page.</span>
+            <button
+              type="button"
+              onClick={() => void navigate('/analyze')}
+              className="shrink-0 rounded-lg bg-[#AA1C41] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#8C1636]"
+            >
+              Go to Analyze
+            </button>
+          </div>
+        ) : null}
+
         {uploadResult && uploadResult.failed.length > 0 ? (
           <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
             <p className="font-semibold">Some files failed to upload:</p>
