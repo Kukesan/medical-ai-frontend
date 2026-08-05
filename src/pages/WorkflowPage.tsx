@@ -30,7 +30,6 @@ export function WorkflowPage() {
   const [chatHistory, setChatHistory] = useState<ChatHistoryResponse | null>(null)
 
   const [warningMessages, setWarningMessages] = useState<string[]>([])
-  const [ setAnalysisTriggered] = useState(false)
   const { status, setStatus, isLoading, run } = useAsyncTask('Start with upload or dashboard refresh.')
 
   const addWarning = (message?: string) => {
