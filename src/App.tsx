@@ -13,6 +13,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { SurgeryPage } from './pages/SurgaryPage'
 import { VaccinationPage } from './pages/VaccinationPage'
 import { AllergyPage } from './pages/AllergyPage'
+import { TimelinePage } from './pages/TimelinePage'
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
         }
       >
         <Route path="/dashboard" element={<DashboardPage/>} />
+        <Route path="/timeline" element={<TimelinePage />} />
         <Route path="/document" element={<DocumentPage />} />
         <Route path="/document/:documentId" element={<DocumentDetailsPage />} />
         <Route path="/analyze" element={<AnalyzePage />} />

@@ -189,6 +189,12 @@ export type UserProfile = {
   blood_sugar: number
 }
 
+export type TimelineEntry = {
+  name: string | null
+  date: string
+  category: string
+}
+
 export type ApiErrorPayload = {
   error?: {
     code?: string

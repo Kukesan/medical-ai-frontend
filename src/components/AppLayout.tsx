@@ -32,6 +32,9 @@ export function AppLayout() {
           <NavLink to="/dashboard" className={navClass}>
             🏠 Dashboard
           </NavLink>
+          <NavLink to="/timeline" className={navClass}>
+            🕒 Timeline
+          </NavLink>
           <NavLink to="/document" className={navClass}>
             📤 Document
           </NavLink>
