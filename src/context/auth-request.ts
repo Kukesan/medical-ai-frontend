@@ -6,7 +6,25 @@ export type AuthRequest = <T>(path: string, init?: RequestInit, auth?: boolean) 
 async function readErrorMessage(response: Response): Promise<string> {
   try {
     const payload = (await response.json()) as ApiErrorPayload
-    return payload.error?.message ?? `Request failed with status ${response.status}`
+
+    if (payload.error?.message) {
+      return payload.error.message
+    }
+
+    if (typeof payload.detail === 'string') {
+      return payload.detail
+    }
+
+    if (Array.isArray(payload.detail) && payload.detail.length > 0) {
+      return payload.detail
+        .map((item) => {
+          const field = item.loc?.at(-1)
+          return field ? `${field}: ${item.msg}` : item.msg
+        })
+        .join('; ')
+    }
+
+    return `Request failed with status ${response.status}`
   } catch {
     return `Request failed with status ${response.status}`
   }

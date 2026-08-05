@@ -175,12 +175,12 @@ export type UserProfile = {
   id: string
   email: string
   full_name: string
-  age: number
-  height: number
-  weight: number
-  blood_group: string
-  pressure: string
-  blood_sugar: number
+  age: number | null
+  height: number | null
+  weight: number | null
+  blood_group: string | null
+  pressure: string | null
+  blood_sugar: number | null
 }
 
 export type TimelineEntry = {
@@ -189,9 +189,15 @@ export type TimelineEntry = {
   category: string
 }
 
+export type ApiValidationErrorItem = {
+  loc?: Array<string | number>
+  msg: string
+}
+
 export type ApiErrorPayload = {
   error?: {
     code?: string
     message?: string
   }
+  detail?: string | ApiValidationErrorItem[]
 }

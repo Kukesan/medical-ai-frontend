@@ -28,13 +28,18 @@ const emptyForm: ProfileForm = {
 function toForm(profile: UserProfile): ProfileForm {
   return {
     full_name: profile.full_name,
-    age: String(profile.age),
-    height: String(profile.height),
-    weight: String(profile.weight),
-    blood_group: profile.blood_group,
-    pressure: profile.pressure,
-    blood_sugar: String(profile.blood_sugar),
+    age: profile.age != null ? String(profile.age) : '',
+    height: profile.height != null ? String(profile.height) : '',
+    weight: profile.weight != null ? String(profile.weight) : '',
+    blood_group: profile.blood_group ?? '',
+    pressure: profile.pressure ?? '',
+    blood_sugar: profile.blood_sugar != null ? String(profile.blood_sugar) : '',
   }
+}
+
+function toOptionalNumber(value: string): number | undefined {
+  const trimmed = value.trim()
+  return trimmed ? Number(trimmed) : undefined
 }
 
 export function ProfilePage() {
@@ -89,12 +94,12 @@ export function ProfilePage() {
       try {
         const updated = await updateMyProfile(request, {
           full_name: fullName,
-          age: Number(form.age),
-          height: Number(form.height),
-          weight: Number(form.weight),
-          blood_group: bloodGroup,
-          pressure,
-          blood_sugar: Number(form.blood_sugar),
+          age: toOptionalNumber(form.age),
+          height: toOptionalNumber(form.height),
+          weight: toOptionalNumber(form.weight),
+          blood_group: bloodGroup || undefined,
+          pressure: pressure || undefined,
+          blood_sugar: toOptionalNumber(form.blood_sugar),
         })
         setProfile(updated)
         setForm(toForm(updated))
@@ -152,6 +157,7 @@ export function ProfilePage() {
                 value={form.full_name}
                 onChange={(event) => setForm((prev) => ({ ...prev, full_name: event.target.value }))}
                 required
+                maxLength={100}
                 className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#AA1C41] focus:outline-none"
               />
             </label>
@@ -159,7 +165,8 @@ export function ProfilePage() {
               Age
               <input
                 type="number"
-                min={0}
+                min={1}
+                max={149}
                 value={form.age}
                 onChange={(event) => setForm((prev) => ({ ...prev, age: event.target.value }))}
                 className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#AA1C41] focus:outline-none"
@@ -169,7 +176,8 @@ export function ProfilePage() {
               Height (cm)
               <input
                 type="number"
-                min={0}
+                min={0.01}
+                step="any"
                 value={form.height}
                 onChange={(event) => setForm((prev) => ({ ...prev, height: event.target.value }))}
                 className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#AA1C41] focus:outline-none"
@@ -179,7 +187,8 @@ export function ProfilePage() {
               Weight (kg)
               <input
                 type="number"
-                min={0}
+                min={0.01}
+                step="any"
                 value={form.weight}
                 onChange={(event) => setForm((prev) => ({ ...prev, weight: event.target.value }))}
                 className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#AA1C41] focus:outline-none"
@@ -191,6 +200,8 @@ export function ProfilePage() {
                 type="text"
                 value={form.blood_group}
                 onChange={(event) => setForm((prev) => ({ ...prev, blood_group: event.target.value }))}
+                maxLength={5}
+                placeholder="e.g. O+"
                 className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#AA1C41] focus:outline-none"
               />
             </label>
@@ -201,6 +212,7 @@ export function ProfilePage() {
                 value={form.pressure}
                 onChange={(event) => setForm((prev) => ({ ...prev, pressure: event.target.value }))}
                 placeholder="e.g. 120/80"
+                maxLength={20}
                 className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#AA1C41] focus:outline-none"
               />
             </label>
@@ -208,7 +220,8 @@ export function ProfilePage() {
               Blood Sugar
               <input
                 type="number"
-                min={0}
+                min={0.01}
+                step="any"
                 value={form.blood_sugar}
                 onChange={(event) => setForm((prev) => ({ ...prev, blood_sugar: event.target.value }))}
                 className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#AA1C41] focus:outline-none"
