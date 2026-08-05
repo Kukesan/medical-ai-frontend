@@ -1,5 +1,5 @@
 import type { AuthRequest } from '../context/auth-request'
-import type { DocumentItem, UploadResult } from '../types/api'
+import type { DocumentDetails, DocumentItem, UploadResult } from '../types/api'
 
 export function uploadDocuments(request: AuthRequest, files: FileList) {
   const formData = new FormData()
@@ -18,5 +18,5 @@ export function listDocuments(request: AuthRequest) {
 }
 
 export function getDocumentById(request: AuthRequest, documentId: string) {
-  return request<DocumentItem>(`/documents/${documentId}`)
+  return request<DocumentDetails>(`/documents/${documentId}`)
 }

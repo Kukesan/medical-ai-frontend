@@ -21,6 +21,28 @@ export type DocumentItem = {
   created_at: string
 }
 
+export type MedicationItem = {
+  name: string
+  dosage: string | null
+  dosage_value: number | null
+  dosage_unit: string | null
+  frequency: string | null
+  duration: string | null
+  start_date: string | null
+  end_date: string | null
+  confidence: number | null
+}
+
+export type DocumentDetails = DocumentItem & {
+  visit_date: string | null
+  doctor_name: string | null
+  hospital_name: string | null
+  medications: MedicationItem[]
+  lab_results: Array<Record<string, unknown>>
+  diagnosis_text: string | null
+  clinical_notes: string[]
+}
+
 export type UploadResult = {
   uploaded: Array<{
     file_name: string
@@ -36,6 +58,34 @@ export type UploadResult = {
 export type AnalysisRunResponse = {
   status: string
   message: string
+}
+
+export type AnalysisRiskLevel = 'low' | 'medium' | 'high'
+
+export type AnalysisTimelineItem = {
+  document_id: string
+  date: string
+  finding: string
+}
+
+export type AnalysisEvidenceItem = {
+  document_id: string
+  snippet: string
+}
+
+export type AnalysisResultItem = {
+  id: string
+  user_id: string
+  category: string
+  risk_level: AnalysisRiskLevel
+  title: string
+  description: string
+  clinical_reason: string
+  confidence: number
+  timeline: AnalysisTimelineItem[]
+  evidence: AnalysisEvidenceItem[]
+  recommendation: string
+  created_at: string
 }
 
 export type TimelineResponse = {
@@ -102,6 +152,29 @@ export type ChatHistoryResponse = {
     confidence: number
     created_at: string
   }>
+}
+
+export type AllergyItem = {
+  id: string
+  substance: string
+  severity: string
+  reaction: string
+}
+
+export type VaccinationItem = {
+  id: string
+  user_id: string
+  name: string
+  date_administered: string
+  is_next_due: boolean
+  next_due_date: string | null
+}
+
+export type SurgeryItem = {
+  id: string
+  name: string
+  date: string
+  notes: string
 }
 
 export type ApiErrorPayload = {

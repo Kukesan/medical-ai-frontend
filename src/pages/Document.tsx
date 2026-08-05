@@ -4,6 +4,7 @@ import { ApiRequestError } from '../lib/ApiRequestError'
 import { useAuth } from '../context/useAuth'
 import { listDocuments, uploadDocuments } from '../service/documentService'
 import type { DocumentItem, UploadResult } from '../types/api'
+import { useNavigate } from 'react-router-dom'
 
 function formatBytes(bytes: number) {
   if (!Number.isFinite(bytes) || bytes < 0) {
@@ -36,6 +37,7 @@ function formatDate(value: string) {
 
 export function DocumentPage() {
   const { request } = useAuth()
+  const navigate = useNavigate()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const [documents, setDocuments] = useState<DocumentItem[]>([])
@@ -184,7 +186,15 @@ export function DocumentPage() {
               <tbody className="divide-y divide-gray-100">
                 {documents.map((doc) => (
                   <tr key={doc.id} className="bg-white hover:bg-gray-50">
-                    <td className="px-4 py-3 text-gray-900">{doc.file_name}</td>
+                    <td className="px-4 py-3 text-gray-900">
+                      <button
+                        type="button"
+                        onClick={() => void navigate(`/document/${doc.id}`)}
+                        className="text-left font-medium text-[#AA1C41] underline-offset-2 hover:underline"
+                      >
+                        {doc.file_name}
+                      </button>
+                    </td>
                     <td className="px-4 py-3 text-gray-700">{doc.document_type}</td>
                     <td className="px-4 py-3 text-gray-700">{formatBytes(doc.file_size)}</td>
                     <td className="px-4 py-3 text-gray-700">{doc.processing_status}</td>

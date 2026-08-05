@@ -40,7 +40,7 @@ export function AuthPage() {
     run(async () => {
       const profile = await login(loginForm)
       setStatus(`✓ Welcome back, ${profile.full_name}!`)
-      setTimeout(() => navigate('/workflow'), 800)
+      setTimeout(() => navigate('/dashboard'), 800)
     })
   }
 

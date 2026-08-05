@@ -53,6 +53,11 @@ export function createAuthRequest({ apiBase, getAccessToken, refreshTokens, logo
       throw new ApiRequestError(response.status, await readErrorMessage(response))
     }
 
-    return (await response.json()) as T
+    if (response.status === 204 || response.headers.get('Content-Length') === '0') {
+      return undefined as T
+    }
+
+    const text = await response.text()
+    return (text ? JSON.parse(text) : undefined) as T
   }
 }
