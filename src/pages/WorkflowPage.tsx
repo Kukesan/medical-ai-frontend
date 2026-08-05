@@ -100,7 +100,6 @@ export function WorkflowPage() {
 
       const response = await runDocumentAnalysis(request, ids)
 
-      setAnalysisTriggered(true)
       setStatus(`${response.status}: ${response.message}. Refresh dashboard shortly.`)
     })
   }

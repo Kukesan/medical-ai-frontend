@@ -2,7 +2,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/useAuth'
 
 export function AppLayout() {
-  const { apiBase, user, logout } = useAuth()
+  const { user, logout } = useAuth()
   const location = useLocation()
   const pageTitle = location.pathname.includes('/workflow') ? 'Workflow Console' : 'Medical AI Portal'
 
