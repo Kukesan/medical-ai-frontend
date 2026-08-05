@@ -1,28 +1,20 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useAuth } from '../context/useAuth'
 import { useAsyncTask } from '../hooks/useAsyncTask'
 import { runDocumentAnalysis } from '../service/analysisService'
 import { askChatQuestion, getChatHistory } from '../service/chatService'
-import { getAlerts, getLabTrends, getMedications, getTimeline } from '../service/dashboardService'
 import { getDocumentById, listDocuments, uploadDocuments } from '../service/documentService'
 import type {
-  AlertItem,
   ChatHistoryResponse,
   ChatResponse,
   DocumentItem,
-  LabTrendsResponse,
-  TimelineResponse,
   UploadResult,
 } from '../types/api'
 
-type WorkflowStep = {
-  label: string
-  done: boolean
-}
 
 export function WorkflowPage() {
-  const { request, isAuthenticated } = useAuth()
+  const { request } = useAuth()
 
   const [uploadFiles, setUploadFiles] = useState<FileList | null>(null)
   const [analysisIdsInput, setAnalysisIdsInput] = useState('')
@@ -38,7 +30,7 @@ export function WorkflowPage() {
   const [chatHistory, setChatHistory] = useState<ChatHistoryResponse | null>(null)
 
   const [warningMessages, setWarningMessages] = useState<string[]>([])
-  const [analysisTriggered, setAnalysisTriggered] = useState(false)
+  const [ setAnalysisTriggered] = useState(false)
   const { status, setStatus, isLoading, run } = useAsyncTask('Start with upload or dashboard refresh.')
 
   const addWarning = (message?: string) => {

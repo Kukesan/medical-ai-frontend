@@ -8,10 +8,9 @@ type AuthMode = 'login' | 'register'
 
 export function AuthPage() {
   const navigate = useNavigate()
-  const { apiOrigin, setApiOrigin, login, register, isAuthenticated, user } = useAuth()
+  const {login, register, isAuthenticated, user } = useAuth()
 
   const [authMode, setAuthMode] = useState<AuthMode>('login')
-  const [showApiSetup, setShowApiSetup] = useState(false)
   
   const [registerForm, setRegisterForm] = useState({
     email: '',

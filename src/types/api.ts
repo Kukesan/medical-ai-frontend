@@ -177,6 +177,18 @@ export type SurgeryItem = {
   notes: string
 }
 
+export type UserProfile = {
+  id: string
+  email: string
+  full_name: string
+  age: number
+  height: number
+  weight: number
+  blood_group: string
+  pressure: string
+  blood_sugar: number
+}
+
 export type ApiErrorPayload = {
   error?: {
     code?: string
