@@ -3,7 +3,7 @@ import type { FormEvent } from 'react'
 import { UploadCloud } from 'lucide-react'
 import { ApiRequestError } from '../lib/ApiRequestError'
 import { useAuth } from '../context/useAuth'
-import { listDocuments, uploadDocuments } from '../service/documentService'
+import { listDocuments, uploadDocumentsViaS3 } from '../service/documentService'
 import type { DocumentItem, UploadResult } from '../types/api'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -100,7 +100,7 @@ export function DocumentPage() {
       setUploadResult(null)
 
       try {
-        const result = await uploadDocuments(request, files)
+        const result = await uploadDocumentsViaS3(request, files)
         setUploadResult(result)
         const uploadedCount = result.uploaded.length
         const failedCount = result.failed.length

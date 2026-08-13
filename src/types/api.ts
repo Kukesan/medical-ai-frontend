@@ -55,6 +55,20 @@ export type UploadResult = {
   }>
 }
 
+export type PresignedUploadResponse = {
+  document_id: string
+  upload_url: string
+  key: string
+  expires_in: number
+}
+
+export type ConfirmUploadResponse = {
+  document_id: string
+  processing_status: string
+  ocr_text: string
+  file_size: number
+}
+
 export type AnalysisRunResponse = {
   status: string
   message: string
