@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { useEffect, useState } from "react";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import {
   Activity,
   Brain,
@@ -14,52 +14,55 @@ import {
   Syringe,
   User,
   X,
-} from 'lucide-react'
-import { useAuth } from '../context/useAuth'
-import { cn } from '../lib/cn'
+} from "lucide-react";
+import { useAuth } from "../context/useAuth";
+import { cn } from "../lib/cn";
 
 const navGroups = [
   {
-    label: 'Overview',
+    label: "Overview",
     items: [
-      { to: '/dashboard', label: 'Dashboard', icon: Home },
-      { to: '/timeline', label: 'Timeline', icon: Clock },
+      { to: "/dashboard", label: "Dashboard", icon: Home },
+      { to: "/timeline", label: "Timeline", icon: Clock },
     ],
   },
   {
-    label: 'Records',
+    label: "Analysis",
+    items: [{ to: "/analyze", label: "Analysis", icon: Brain }],
+  },
+  {
+    label: "Records",
     items: [
-      { to: '/document', label: 'Documents', icon: FileText },
-      { to: '/analyze', label: 'Analyze', icon: Brain },
-      { to: '/allergy', label: 'Allergies', icon: Shield },
-      { to: '/vaccination', label: 'Vaccinations', icon: Syringe },
-      { to: '/surgery', label: 'Surgeries', icon: Stethoscope },
+      { to: "/document", label: "Documents", icon: FileText },
+      { to: "/allergy", label: "Allergies", icon: Shield },
+      { to: "/vaccination", label: "Vaccinations", icon: Syringe },
+      { to: "/surgery", label: "Surgeries", icon: Stethoscope },
     ],
   },
   {
-    label: 'Assistant',
+    label: "Assistant",
     items: [
-      { to: '/chat', label: 'Chat', icon: MessageCircle },
-      { to: '/profile', label: 'Profile', icon: User },
+      { to: "/chat", label: "Chat", icon: MessageCircle },
+      { to: "/profile", label: "Profile", icon: User },
     ],
   },
-]
+];
 
 const pageTitles: Array<[string, string]> = [
-  ['/dashboard', 'Dashboard'],
-  ['/timeline', 'Timeline'],
-  ['/document', 'Documents'],
-  ['/analyze', 'Analysis'],
-  ['/allergy', 'Allergies'],
-  ['/vaccination', 'Vaccinations'],
-  ['/surgery', 'Surgeries'],
-  ['/chat', 'Chat'],
-  ['/profile', 'Profile'],
-]
+  ["/dashboard", "Dashboard"],
+  ["/timeline", "Timeline"],
+  ["/document", "Documents"],
+  ["/analyze", "Analysis"],
+  ["/allergy", "Allergies"],
+  ["/vaccination", "Vaccinations"],
+  ["/surgery", "Surgeries"],
+  ["/chat", "Chat"],
+  ["/profile", "Profile"],
+];
 
 function usePageTitle(pathname: string) {
-  const match = pageTitles.find(([prefix]) => pathname.startsWith(prefix))
-  return match ? match[1] : 'Medical AI Portal'
+  const match = pageTitles.find(([prefix]) => pathname.startsWith(prefix));
+  return match ? match[1] : "Medical AI Portal";
 }
 
 function Logo() {
@@ -67,26 +70,33 @@ function Logo() {
     <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary-600 to-primary-500 shadow-brand">
       <Activity className="h-5 w-5 text-white" strokeWidth={2.5} />
     </div>
-  )
+  );
 }
 
 function NavList({ onNavigate }: { onNavigate?: () => void }) {
   const navClass = ({ isActive }: { isActive: boolean }) =>
     cn(
-      'flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-semibold transition-all',
+      "flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-semibold transition-all",
       isActive
-        ? 'bg-primary-50 text-primary-700 shadow-sm ring-1 ring-inset ring-primary-200'
-        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
-    )
+        ? "bg-primary-50 text-primary-700 shadow-sm ring-1 ring-inset ring-primary-200"
+        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
+    );
 
   return (
     <nav className="mt-8 flex flex-col gap-6" aria-label="Primary">
       {navGroups.map((group) => (
         <div key={group.label}>
-          <p className="mb-2 px-3.5 text-xs font-bold uppercase tracking-wider text-gray-400">{group.label}</p>
+          <p className="mb-2 px-3.5 text-xs font-bold uppercase tracking-wider text-gray-400">
+            {group.label}
+          </p>
           <div className="grid gap-1">
             {group.items.map((item) => (
-              <NavLink key={item.to} to={item.to} className={navClass} onClick={onNavigate}>
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={navClass}
+                onClick={onNavigate}
+              >
                 <item.icon className="h-4 w-4 shrink-0" strokeWidth={2.25} />
                 {item.label}
               </NavLink>
@@ -95,18 +105,18 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
         </div>
       ))}
     </nav>
-  )
+  );
 }
 
 export function AppLayout() {
-  const { user, logout } = useAuth()
-  const location = useLocation()
-  const pageTitle = usePageTitle(location.pathname)
-  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false)
+  const { user, logout } = useAuth();
+  const location = useLocation();
+  const pageTitle = usePageTitle(location.pathname);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   useEffect(() => {
-    setIsMobileNavOpen(false)
-  }, [location.pathname])
+    setIsMobileNavOpen(false);
+  }, [location.pathname]);
 
   return (
     <div className="flex min-h-screen bg-gray-50 text-gray-900">
@@ -114,7 +124,9 @@ export function AppLayout() {
         <div className="flex items-center gap-3">
           <Logo />
           <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-primary-600">Medical AI</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-primary-600">
+              Medical AI
+            </p>
             <p className="text-sm font-semibold text-gray-900">Yarlit Portal</p>
           </div>
         </div>
@@ -133,14 +145,21 @@ export function AppLayout() {
 
       {isMobileNavOpen ? (
         <div className="fixed inset-0 z-40 md:hidden">
-          <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onClick={() => setIsMobileNavOpen(false)} />
+          <div
+            className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm"
+            onClick={() => setIsMobileNavOpen(false)}
+          />
           <aside className="relative flex h-full w-72 max-w-[80vw] animate-fade-in flex-col bg-white p-6 shadow-2xl">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <Logo />
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-wider text-primary-600">Medical AI</p>
-                  <p className="text-sm font-semibold text-gray-900">Yarlit Portal</p>
+                  <p className="text-xs font-bold uppercase tracking-wider text-primary-600">
+                    Medical AI
+                  </p>
+                  <p className="text-sm font-semibold text-gray-900">
+                    Yarlit Portal
+                  </p>
                 </div>
               </div>
               <button
@@ -179,7 +198,9 @@ export function AppLayout() {
               >
                 <Menu className="h-5 w-5" />
               </button>
-              <h2 className="font-display text-xl text-gray-900 sm:text-2xl">{pageTitle}</h2>
+              <h2 className="font-display text-xl text-gray-900 sm:text-2xl">
+                {pageTitle}
+              </h2>
             </div>
             <div className="flex items-center gap-3">
               {user ? (
@@ -207,5 +228,5 @@ export function AppLayout() {
         </main>
       </div>
     </div>
-  )
+  );
 }
