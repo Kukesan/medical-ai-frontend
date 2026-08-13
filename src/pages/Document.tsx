@@ -1,10 +1,26 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
+import { UploadCloud } from 'lucide-react'
 import { ApiRequestError } from '../lib/ApiRequestError'
 import { useAuth } from '../context/useAuth'
 import { listDocuments, uploadDocuments } from '../service/documentService'
 import type { DocumentItem, UploadResult } from '../types/api'
 import { useNavigate } from 'react-router-dom'
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  PageHeader,
+  Table,
+  Tbody,
+  Td,
+  Th,
+  Thead,
+  Tr,
+  inferStatusTone,
+} from '../components/ui'
 
 function formatBytes(bytes: number) {
   if (!Number.isFinite(bytes) || bytes < 0) {
@@ -112,49 +128,41 @@ export function DocumentPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-6">
-      <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
-        <h1 className="text-2xl font-bold text-gray-900">Document Upload</h1>
-        <p className="mt-2 text-sm text-gray-600">Upload one or more medical documents using the secure API endpoint.</p>
+      <PageHeader title="Document Upload" description="Upload one or more medical documents using the secure API endpoint." />
 
-        <form className="mt-5 flex flex-col gap-4" onSubmit={onUpload}>
-          <input
-            ref={fileInputRef}
-            type="file"
-            name="files"
-            multiple
-            className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 file:mr-4 file:rounded-md file:border-0 file:bg-[#AA1C41] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-[#8C1636]"
-          />
+      <Card>
+        <form className="flex flex-col gap-4" onSubmit={onUpload}>
+          <label
+            htmlFor="document-files"
+            className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-gray-300 bg-gray-50/60 px-6 py-10 text-center transition hover:border-primary-300 hover:bg-primary-50/40"
+          >
+            <UploadCloud className="h-8 w-8 text-primary-500" />
+            <span className="text-sm font-semibold text-gray-700">Click to choose files, or drag them here</span>
+            <span className="text-xs text-gray-500">Supports multiple files at once</span>
+            <input ref={fileInputRef} id="document-files" type="file" name="files" multiple className="sr-only" />
+          </label>
           <div className="flex flex-wrap gap-3">
-            <button
-              type="submit"
-              disabled={isUploading}
-              className="rounded-lg bg-[#AA1C41] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#8C1636] disabled:cursor-not-allowed disabled:opacity-70"
-            >
+            <Button type="submit" isLoading={isUploading}>
               {isUploading ? 'Uploading...' : 'Upload Documents'}
-            </button>
-            <button
-              type="button"
-              onClick={() => void loadDocuments()}
-              disabled={isLoadingDocuments}
-              className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-[#AA1C41] hover:text-[#AA1C41] disabled:cursor-not-allowed disabled:opacity-70"
-            >
+            </Button>
+            <Button variant="secondary" type="button" onClick={() => void loadDocuments()} isLoading={isLoadingDocuments}>
               {isLoadingDocuments ? 'Refreshing...' : 'Refresh List'}
-            </button>
+            </Button>
           </div>
         </form>
 
-        {status ? <p className="mt-4 text-sm text-gray-700">{status}</p> : null}
+        {status ? (
+          <Alert tone={inferStatusTone(status)} className="mt-4">
+            {status}
+          </Alert>
+        ) : null}
 
         {uploadResult && uploadResult.uploaded.length > 0 ? (
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
             <span>You can analyze your uploaded documents on the Analyze page.</span>
-            <button
-              type="button"
-              onClick={() => void navigate('/analyze')}
-              className="shrink-0 rounded-lg bg-[#AA1C41] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#8C1636]"
-            >
+            <Button size="sm" onClick={() => void navigate('/analyze')}>
               Go to Analyze
-            </button>
+            </Button>
           </div>
         ) : null}
 
@@ -170,55 +178,53 @@ export function DocumentPage() {
             </ul>
           </div>
         ) : null}
-      </section>
+      </Card>
 
-      <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+      <Card>
         <div className="mb-4 flex items-center justify-between gap-2">
           <h2 className="text-lg font-semibold text-gray-900">Uploaded Documents</h2>
           <p className="text-sm text-gray-600">{documents.length} total</p>
         </div>
 
-        {isLoadingDocuments ? <p className="text-sm text-gray-600">Loading documents...</p> : null}
-
-        {!isLoadingDocuments && documents.length === 0 ? (
-          <p className="text-sm text-gray-600">No documents uploaded yet.</p>
-        ) : null}
-
-        {!isLoadingDocuments && documents.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 text-sm">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-700">File Name</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Type</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Size</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Status</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Created</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {documents.map((doc) => (
-                  <tr key={doc.id} className="bg-white hover:bg-gray-50">
-                    <td className="px-4 py-3 text-gray-900">
-                      <button
-                        type="button"
-                        onClick={() => void navigate(`/document/${doc.id}`)}
-                        className="text-left font-medium text-[#AA1C41] underline-offset-2 hover:underline"
-                      >
-                        {doc.file_name}
-                      </button>
-                    </td>
-                    <td className="px-4 py-3 text-gray-700">{doc.document_type}</td>
-                    <td className="px-4 py-3 text-gray-700">{formatBytes(doc.file_size)}</td>
-                    <td className="px-4 py-3 text-gray-700">{doc.processing_status}</td>
-                    <td className="px-4 py-3 text-gray-700">{formatDate(doc.created_at)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : null}
-      </section>
+        {isLoadingDocuments ? (
+          <p className="text-sm text-gray-600">Loading documents...</p>
+        ) : documents.length === 0 ? (
+          <EmptyState title="No documents uploaded yet." description="Upload a file above to get started." />
+        ) : (
+          <Table>
+            <Thead>
+              <Tr>
+                <Th>File Name</Th>
+                <Th>Type</Th>
+                <Th>Size</Th>
+                <Th>Status</Th>
+                <Th>Created</Th>
+              </Tr>
+            </Thead>
+            <Tbody>
+              {documents.map((doc) => (
+                <Tr key={doc.id}>
+                  <Td>
+                    <button
+                      type="button"
+                      onClick={() => void navigate(`/document/${doc.id}`)}
+                      className="text-left font-medium text-primary-700 underline-offset-2 hover:underline"
+                    >
+                      {doc.file_name}
+                    </button>
+                  </Td>
+                  <Td>{doc.document_type}</Td>
+                  <Td>{formatBytes(doc.file_size)}</Td>
+                  <Td>
+                    <Badge tone="neutral">{doc.processing_status}</Badge>
+                  </Td>
+                  <Td>{formatDate(doc.created_at)}</Td>
+                </Tr>
+              ))}
+            </Tbody>
+          </Table>
+        )}
+      </Card>
     </div>
   )
 }

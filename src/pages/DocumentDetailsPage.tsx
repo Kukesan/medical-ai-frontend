@@ -1,9 +1,22 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 import { ApiRequestError } from '../lib/ApiRequestError'
 import { useAuth } from '../context/useAuth'
 import { getDocumentById } from '../service/documentService'
 import type { DocumentDetails } from '../types/api'
+import {
+  Alert,
+  Card,
+  LoadingRow,
+  Table,
+  Tbody,
+  Td,
+  Th,
+  Thead,
+  Tr,
+  buttonClassName,
+} from '../components/ui'
 
 function formatBytes(bytes: number) {
   if (!Number.isFinite(bytes) || bytes < 0) {
@@ -36,6 +49,15 @@ function formatDate(value: string) {
 
 function renderValue(value: string | null) {
   return value && value.trim() ? value : '-'
+}
+
+function DetailItem({ label, value, className }: { label: string; value: string; className?: string }) {
+  return (
+    <p className={className}>
+      <span className="block text-xs font-semibold uppercase tracking-wide text-gray-400">{label}</span>
+      <span className="mt-0.5 block text-sm text-gray-800">{value}</span>
+    </p>
+  )
 }
 
 export function DocumentDetailsPage() {
@@ -79,56 +101,42 @@ export function DocumentDetailsPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-6">
-      <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+      <Card>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Document Details</h1>
             {documentId ? <p className="mt-1 text-xs text-gray-500">ID: {documentId}</p> : null}
           </div>
-          <Link
-            to="/document"
-            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-[#AA1C41] hover:text-[#AA1C41]"
-          >
+          <Link to="/document" className={buttonClassName('secondary', 'md', 'inline-flex items-center gap-2')}>
+            <ArrowLeft className="h-4 w-4" />
             Back to Documents
           </Link>
         </div>
 
-        {isLoading ? <p className="mt-5 text-sm text-gray-600">Loading document details...</p> : null}
-        {status ? <p className="mt-5 text-sm text-red-700">{status}</p> : null}
+        {isLoading ? <LoadingRow label="Loading document details..." /> : null}
+        {status ? (
+          <Alert tone="danger" className="mt-5">
+            {status}
+          </Alert>
+        ) : null}
 
         {!isLoading && !status && details ? (
-          <div className="mt-5 space-y-5">
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              <p className="text-sm text-gray-700">
-                <span className="font-semibold text-gray-900">File Name:</span> {details.file_name}
-              </p>
-              <p className="text-sm text-gray-700">
-                <span className="font-semibold text-gray-900">MIME Type:</span> {details.mime_type}
-              </p>
-              <p className="text-sm text-gray-700">
-                <span className="font-semibold text-gray-900">File Size:</span> {formatBytes(details.file_size)}
-              </p>
-              <p className="text-sm text-gray-700">
-                <span className="font-semibold text-gray-900">Document Type:</span> {details.document_type}
-              </p>
-              <p className="text-sm text-gray-700">
-                <span className="font-semibold text-gray-900">Processing Status:</span> {details.processing_status}
-              </p>
-              <p className="text-sm text-gray-700">
-                <span className="font-semibold text-gray-900">Created:</span> {formatDate(details.created_at)}
-              </p>
-              <p className="text-sm text-gray-700">
-                <span className="font-semibold text-gray-900">Visit Date:</span> {renderValue(details.visit_date)}
-              </p>
-              <p className="text-sm text-gray-700">
-                <span className="font-semibold text-gray-900">Doctor:</span> {renderValue(details.doctor_name)}
-              </p>
-              <p className="text-sm text-gray-700">
-                <span className="font-semibold text-gray-900">Hospital:</span> {renderValue(details.hospital_name)}
-              </p>
-              <p className="text-sm text-gray-700 sm:col-span-2 lg:col-span-3">
-                <span className="font-semibold text-gray-900">Diagnosis:</span> {renderValue(details.diagnosis_text)}
-              </p>
+          <div className="mt-5 space-y-6">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <DetailItem label="File Name" value={details.file_name} />
+              <DetailItem label="MIME Type" value={details.mime_type} />
+              <DetailItem label="File Size" value={formatBytes(details.file_size)} />
+              <DetailItem label="Document Type" value={details.document_type} />
+              <DetailItem label="Processing Status" value={details.processing_status} />
+              <DetailItem label="Created" value={formatDate(details.created_at)} />
+              <DetailItem label="Visit Date" value={renderValue(details.visit_date)} />
+              <DetailItem label="Doctor" value={renderValue(details.doctor_name)} />
+              <DetailItem label="Hospital" value={renderValue(details.hospital_name)} />
+              <DetailItem
+                label="Diagnosis"
+                value={renderValue(details.diagnosis_text)}
+                className="sm:col-span-2 lg:col-span-3"
+              />
             </div>
 
             <div>
@@ -136,36 +144,34 @@ export function DocumentDetailsPage() {
               {details.medications.length === 0 ? (
                 <p className="text-sm text-gray-600">No medications extracted.</p>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200 text-sm">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-3 py-2 text-left font-semibold text-gray-700">Name</th>
-                        <th className="px-3 py-2 text-left font-semibold text-gray-700">Dosage</th>
-                        <th className="px-3 py-2 text-left font-semibold text-gray-700">Frequency</th>
-                        <th className="px-3 py-2 text-left font-semibold text-gray-700">Duration</th>
-                        <th className="px-3 py-2 text-left font-semibold text-gray-700">Start Date</th>
-                        <th className="px-3 py-2 text-left font-semibold text-gray-700">End Date</th>
-                        <th className="px-3 py-2 text-left font-semibold text-gray-700">Confidence</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100 bg-white">
-                      {details.medications.map((medication, index) => (
-                        <tr key={`${medication.name}-${index}`}>
-                          <td className="px-3 py-2 text-gray-900">{medication.name}</td>
-                          <td className="px-3 py-2 text-gray-700">{renderValue(medication.dosage)}</td>
-                          <td className="px-3 py-2 text-gray-700">{renderValue(medication.frequency)}</td>
-                          <td className="px-3 py-2 text-gray-700">{renderValue(medication.duration)}</td>
-                          <td className="px-3 py-2 text-gray-700">{renderValue(medication.start_date)}</td>
-                          <td className="px-3 py-2 text-gray-700">{renderValue(medication.end_date)}</td>
-                          <td className="px-3 py-2 text-gray-700">
-                            {medication.confidence === null ? '-' : `${Math.round(medication.confidence * 100)}%`}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <Table>
+                  <Thead>
+                    <Tr>
+                      <Th>Name</Th>
+                      <Th>Dosage</Th>
+                      <Th>Frequency</Th>
+                      <Th>Duration</Th>
+                      <Th>Start Date</Th>
+                      <Th>End Date</Th>
+                      <Th>Confidence</Th>
+                    </Tr>
+                  </Thead>
+                  <Tbody>
+                    {details.medications.map((medication, index) => (
+                      <Tr key={`${medication.name}-${index}`}>
+                        <Td className="font-medium text-gray-900">{medication.name}</Td>
+                        <Td>{renderValue(medication.dosage)}</Td>
+                        <Td>{renderValue(medication.frequency)}</Td>
+                        <Td>{renderValue(medication.duration)}</Td>
+                        <Td>{renderValue(medication.start_date)}</Td>
+                        <Td>{renderValue(medication.end_date)}</Td>
+                        <Td>
+                          {medication.confidence === null ? '-' : `${Math.round(medication.confidence * 100)}%`}
+                        </Td>
+                      </Tr>
+                    ))}
+                  </Tbody>
+                </Table>
               )}
             </div>
 
@@ -194,7 +200,7 @@ export function DocumentDetailsPage() {
             </div>
           </div>
         ) : null}
-      </section>
+      </Card>
     </div>
   )
 }

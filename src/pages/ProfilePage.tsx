@@ -4,6 +4,7 @@ import { ApiRequestError } from '../lib/ApiRequestError'
 import { useAuth } from '../context/useAuth'
 import { getMyProfile, updateMyProfile } from '../service/profileService'
 import type { UserProfile } from '../types/api'
+import { Alert, Button, Card, Field, Input, LoadingRow, PageHeader, inferStatusTone } from '../components/ui'
 
 type ProfileForm = {
   full_name: string
@@ -121,127 +122,118 @@ export function ProfilePage() {
 
   return (
     <div className="flex flex-1 flex-col gap-6">
-      <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
-        <div className="mb-4 flex items-center justify-between gap-2">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Profile</h1>
-            <p className="mt-2 text-sm text-gray-600">Manage your profile and account settings here.</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => void loadProfile()}
-            disabled={isLoading}
-            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-[#AA1C41] hover:text-[#AA1C41] disabled:cursor-not-allowed disabled:opacity-70"
-          >
+      <PageHeader
+        title="Profile"
+        description="Manage your profile and account settings here."
+        actions={
+          <Button variant="secondary" onClick={() => void loadProfile()} isLoading={isLoading}>
             {isLoading ? 'Refreshing...' : 'Refresh'}
-          </button>
-        </div>
+          </Button>
+        }
+      />
 
-        {isLoading ? <p className="text-sm text-gray-600">Loading profile...</p> : null}
-
-        {!isLoading ? (
-          <form className="grid grid-cols-1 gap-4 sm:grid-cols-2" onSubmit={onSave}>
-            <label className="flex flex-col gap-1 text-sm text-gray-700">
-              Email
-              <input
-                type="email"
-                value={profile?.email ?? ''}
-                disabled
-                className="rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-sm text-gray-500"
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-sm text-gray-700">
-              Full Name *
-              <input
-                type="text"
-                value={form.full_name}
-                onChange={(event) => setForm((prev) => ({ ...prev, full_name: event.target.value }))}
-                required
-                maxLength={100}
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#AA1C41] focus:outline-none"
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-sm text-gray-700">
-              Age
-              <input
-                type="number"
-                min={1}
-                max={149}
-                value={form.age}
-                onChange={(event) => setForm((prev) => ({ ...prev, age: event.target.value }))}
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#AA1C41] focus:outline-none"
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-sm text-gray-700">
-              Height (cm)
-              <input
-                type="number"
-                min={0.01}
-                step="any"
-                value={form.height}
-                onChange={(event) => setForm((prev) => ({ ...prev, height: event.target.value }))}
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#AA1C41] focus:outline-none"
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-sm text-gray-700">
-              Weight (kg)
-              <input
-                type="number"
-                min={0.01}
-                step="any"
-                value={form.weight}
-                onChange={(event) => setForm((prev) => ({ ...prev, weight: event.target.value }))}
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#AA1C41] focus:outline-none"
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-sm text-gray-700">
-              Blood Group
-              <input
-                type="text"
-                value={form.blood_group}
-                onChange={(event) => setForm((prev) => ({ ...prev, blood_group: event.target.value }))}
-                maxLength={5}
-                placeholder="e.g. O+"
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#AA1C41] focus:outline-none"
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-sm text-gray-700">
-              Blood Pressure
-              <input
-                type="text"
-                value={form.pressure}
-                onChange={(event) => setForm((prev) => ({ ...prev, pressure: event.target.value }))}
-                placeholder="e.g. 120/80"
-                maxLength={20}
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#AA1C41] focus:outline-none"
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-sm text-gray-700">
-              Blood Sugar
-              <input
-                type="number"
-                min={0.01}
-                step="any"
-                value={form.blood_sugar}
-                onChange={(event) => setForm((prev) => ({ ...prev, blood_sugar: event.target.value }))}
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#AA1C41] focus:outline-none"
-              />
-            </label>
-
-            <div className="sm:col-span-2">
-              <button
-                type="submit"
-                disabled={isSaving}
-                className="rounded-lg bg-[#AA1C41] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#8C1636] disabled:cursor-not-allowed disabled:opacity-70"
-              >
-                {isSaving ? 'Saving...' : 'Save Changes'}
-              </button>
+      <Card>
+        {isLoading ? (
+          <LoadingRow label="Loading profile..." />
+        ) : (
+          <form onSubmit={onSave} className="space-y-8">
+            <div>
+              <h2 className="mb-4 text-sm font-bold uppercase tracking-wide text-gray-400">Identity</h2>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Field label="Email" htmlFor="profile-email">
+                  <Input id="profile-email" type="email" value={profile?.email ?? ''} disabled />
+                </Field>
+                <Field label="Full Name" htmlFor="profile-full-name" required>
+                  <Input
+                    id="profile-full-name"
+                    type="text"
+                    value={form.full_name}
+                    onChange={(event) => setForm((prev) => ({ ...prev, full_name: event.target.value }))}
+                    required
+                    maxLength={100}
+                  />
+                </Field>
+                <Field label="Age" htmlFor="profile-age">
+                  <Input
+                    id="profile-age"
+                    type="number"
+                    min={1}
+                    max={149}
+                    value={form.age}
+                    onChange={(event) => setForm((prev) => ({ ...prev, age: event.target.value }))}
+                  />
+                </Field>
+              </div>
             </div>
-          </form>
-        ) : null}
 
-        {status ? <p className="mt-4 text-sm text-gray-700">{status}</p> : null}
-      </section>
+            <div>
+              <h2 className="mb-4 text-sm font-bold uppercase tracking-wide text-gray-400">Vitals</h2>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Field label="Height (cm)" htmlFor="profile-height">
+                  <Input
+                    id="profile-height"
+                    type="number"
+                    min={0.01}
+                    step="any"
+                    value={form.height}
+                    onChange={(event) => setForm((prev) => ({ ...prev, height: event.target.value }))}
+                  />
+                </Field>
+                <Field label="Weight (kg)" htmlFor="profile-weight">
+                  <Input
+                    id="profile-weight"
+                    type="number"
+                    min={0.01}
+                    step="any"
+                    value={form.weight}
+                    onChange={(event) => setForm((prev) => ({ ...prev, weight: event.target.value }))}
+                  />
+                </Field>
+                <Field label="Blood Group" htmlFor="profile-blood-group">
+                  <Input
+                    id="profile-blood-group"
+                    type="text"
+                    value={form.blood_group}
+                    onChange={(event) => setForm((prev) => ({ ...prev, blood_group: event.target.value }))}
+                    maxLength={5}
+                    placeholder="e.g. O+"
+                  />
+                </Field>
+                <Field label="Blood Pressure" htmlFor="profile-pressure">
+                  <Input
+                    id="profile-pressure"
+                    type="text"
+                    value={form.pressure}
+                    onChange={(event) => setForm((prev) => ({ ...prev, pressure: event.target.value }))}
+                    placeholder="e.g. 120/80"
+                    maxLength={20}
+                  />
+                </Field>
+                <Field label="Blood Sugar" htmlFor="profile-blood-sugar">
+                  <Input
+                    id="profile-blood-sugar"
+                    type="number"
+                    min={0.01}
+                    step="any"
+                    value={form.blood_sugar}
+                    onChange={(event) => setForm((prev) => ({ ...prev, blood_sugar: event.target.value }))}
+                  />
+                </Field>
+              </div>
+            </div>
+
+            <Button type="submit" isLoading={isSaving}>
+              {isSaving ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </form>
+        )}
+
+        {status ? (
+          <Alert tone={inferStatusTone(status)} className="mt-4">
+            {status}
+          </Alert>
+        ) : null}
+      </Card>
     </div>
   )
 }

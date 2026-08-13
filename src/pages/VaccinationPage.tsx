@@ -1,9 +1,30 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
+import { Syringe } from 'lucide-react'
 import { ApiRequestError } from '../lib/ApiRequestError'
 import { useAuth } from '../context/useAuth'
 import { createVaccination, deleteVaccination, listVaccinations } from '../service/vaccinationService'
 import type { VaccinationItem } from '../types/api'
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  Checkbox,
+  ConfirmDialog,
+  EmptyState,
+  Field,
+  Input,
+  PageHeader,
+  SkeletonLines,
+  Table,
+  Tbody,
+  Td,
+  Th,
+  Thead,
+  Tr,
+  inferStatusTone,
+} from '../components/ui'
 
 const emptyForm = { name: '', date_administered: '', is_next_due: false, next_due_date: '' }
 
@@ -30,6 +51,7 @@ export function VaccinationPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [form, setForm] = useState(emptyForm)
   const [isCreating, setIsCreating] = useState(false)
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const loadVaccinations = useCallback(async () => {
@@ -102,10 +124,6 @@ export function VaccinationPage() {
 
   const onDelete = useCallback(
     async (vaccinationId: string) => {
-      if (!window.confirm('Delete this vaccination?')) {
-        return
-      }
-
       setDeletingId(vaccinationId)
       setStatus('')
 
@@ -123,6 +141,7 @@ export function VaccinationPage() {
         }
       } finally {
         setDeletingId(null)
+        setPendingDeleteId(null)
       }
     },
     [loadVaccinations, request],
@@ -130,118 +149,122 @@ export function VaccinationPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-6">
-      <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
-        <div className="mb-4 flex items-center justify-between gap-2">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Vaccination</h1>
-            <p className="mt-2 text-sm text-gray-600">Manage your vaccination information here.</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => void loadVaccinations()}
-            disabled={isLoading}
-            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-[#AA1C41] hover:text-[#AA1C41] disabled:cursor-not-allowed disabled:opacity-70"
-          >
+      <PageHeader
+        title="Vaccinations"
+        description="Manage your vaccination information here."
+        actions={
+          <Button variant="secondary" onClick={() => void loadVaccinations()} isLoading={isLoading}>
             {isLoading ? 'Refreshing...' : 'Refresh List'}
-          </button>
-        </div>
+          </Button>
+        }
+      />
 
-        <form className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 sm:items-end" onSubmit={onCreate}>
-          <label className="flex flex-col gap-1 text-sm text-gray-700">
-            Name *
-            <input
+      <Card>
+        <form className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:items-end lg:grid-cols-4" onSubmit={onCreate}>
+          <Field label="Name" htmlFor="vaccination-name" required>
+            <Input
+              id="vaccination-name"
               type="text"
               value={form.name}
               onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
               required
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#AA1C41] focus:outline-none"
             />
-          </label>
-          <label className="flex flex-col gap-1 text-sm text-gray-700">
-            Date Administered *
-            <input
+          </Field>
+          <Field label="Date Administered" htmlFor="vaccination-date" required>
+            <Input
+              id="vaccination-date"
               type="date"
               value={form.date_administered}
               onChange={(event) => setForm((prev) => ({ ...prev, date_administered: event.target.value }))}
               required
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#AA1C41] focus:outline-none"
             />
-          </label>
-          <label className="flex items-center gap-2 pb-2 text-sm text-gray-700">
-            <input
-              type="checkbox"
+          </Field>
+          <label htmlFor="vaccination-next-due" className="flex items-center gap-2 pb-2.5 text-sm text-gray-700">
+            <Checkbox
+              id="vaccination-next-due"
               checked={form.is_next_due}
               onChange={(event) => setForm((prev) => ({ ...prev, is_next_due: event.target.checked }))}
-              className="h-4 w-4 rounded border-gray-300 text-[#AA1C41] focus:ring-[#AA1C41]"
             />
             Next Dose Due
           </label>
-          <label className="flex flex-col gap-1 text-sm text-gray-700">
-            Next Due Date{form.is_next_due ? ' *' : ''}
-            <input
+          <Field label="Next Due Date" htmlFor="vaccination-next-due-date" required={form.is_next_due}>
+            <Input
+              id="vaccination-next-due-date"
               type="date"
               value={form.next_due_date}
               onChange={(event) => setForm((prev) => ({ ...prev, next_due_date: event.target.value }))}
               required={form.is_next_due}
               disabled={!form.is_next_due}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#AA1C41] focus:outline-none disabled:bg-gray-100 disabled:text-gray-400"
             />
-          </label>
+          </Field>
           <div className="sm:col-span-2 lg:col-span-4">
-            <button
-              type="submit"
-              disabled={isCreating}
-              className="rounded-lg bg-[#AA1C41] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#8C1636] disabled:cursor-not-allowed disabled:opacity-70"
-            >
+            <Button type="submit" isLoading={isCreating}>
               {isCreating ? 'Adding...' : 'Add Vaccination'}
-            </button>
+            </Button>
           </div>
         </form>
 
-        {status ? <p className="mb-4 text-sm text-gray-700">{status}</p> : null}
-
-        {isLoading ? <p className="text-sm text-gray-600">Loading vaccinations...</p> : null}
-
-        {!isLoading && vaccinations.length === 0 ? (
-          <p className="text-sm text-gray-600">No vaccinations found.</p>
+        {status ? (
+          <Alert tone={inferStatusTone(status)} className="mb-4">
+            {status}
+          </Alert>
         ) : null}
 
-        {!isLoading && vaccinations.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 text-sm">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Name</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Date Administered</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Next Dose Due</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Next Due Date</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-700"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {vaccinations.map((vaccination) => (
-                  <tr key={vaccination.id} className="bg-white hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium text-gray-900">{vaccination.name}</td>
-                    <td className="px-4 py-3 text-gray-700">{formatDate(vaccination.date_administered)}</td>
-                    <td className="px-4 py-3 text-gray-700">{vaccination.is_next_due ? 'Yes' : 'No'}</td>
-                    <td className="px-4 py-3 text-gray-700">{formatDate(vaccination.next_due_date)}</td>
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        type="button"
-                        onClick={() => void onDelete(vaccination.id)}
-                        disabled={deletingId === vaccination.id}
-                        className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-semibold text-red-600 transition hover:border-red-400 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-70"
-                      >
-                        {deletingId === vaccination.id ? 'Deleting...' : 'Delete'}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : null}
-      </section>
+        {isLoading ? (
+          <SkeletonLines count={4} />
+        ) : vaccinations.length === 0 ? (
+          <EmptyState icon={Syringe} title="No vaccinations found." description="Add a vaccination using the form above." />
+        ) : (
+          <Table>
+            <Thead>
+              <Tr>
+                <Th>Name</Th>
+                <Th>Date Administered</Th>
+                <Th>Next Dose Due</Th>
+                <Th>Next Due Date</Th>
+                <Th></Th>
+              </Tr>
+            </Thead>
+            <Tbody>
+              {vaccinations.map((vaccination) => (
+                <Tr key={vaccination.id}>
+                  <Td className="font-medium text-gray-900">{vaccination.name}</Td>
+                  <Td>{formatDate(vaccination.date_administered)}</Td>
+                  <Td>
+                    <Badge tone={vaccination.is_next_due ? 'warning' : 'neutral'}>
+                      {vaccination.is_next_due ? 'Yes' : 'No'}
+                    </Badge>
+                  </Td>
+                  <Td>{formatDate(vaccination.next_due_date)}</Td>
+                  <Td className="text-right">
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={() => setPendingDeleteId(vaccination.id)}
+                      disabled={deletingId === vaccination.id}
+                    >
+                      {deletingId === vaccination.id ? 'Deleting...' : 'Delete'}
+                    </Button>
+                  </Td>
+                </Tr>
+              ))}
+            </Tbody>
+          </Table>
+        )}
+      </Card>
+
+      <ConfirmDialog
+        open={pendingDeleteId !== null}
+        title="Delete this vaccination?"
+        description="This action cannot be undone."
+        isLoading={deletingId !== null}
+        onCancel={() => setPendingDeleteId(null)}
+        onConfirm={() => {
+          if (pendingDeleteId) {
+            void onDelete(pendingDeleteId)
+          }
+        }}
+      />
     </div>
   )
 }

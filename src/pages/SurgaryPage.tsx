@@ -1,9 +1,28 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
+import { Stethoscope } from 'lucide-react'
 import { ApiRequestError } from '../lib/ApiRequestError'
 import { useAuth } from '../context/useAuth'
 import { createSurgery, deleteSurgery, listSurgeries } from '../service/surgeryService'
 import type { SurgeryItem } from '../types/api'
+import {
+  Alert,
+  Button,
+  Card,
+  ConfirmDialog,
+  EmptyState,
+  Field,
+  Input,
+  PageHeader,
+  SkeletonLines,
+  Table,
+  Tbody,
+  Td,
+  Th,
+  Thead,
+  Tr,
+  inferStatusTone,
+} from '../components/ui'
 
 const emptyForm = { name: '', date: '', notes: '' }
 
@@ -26,6 +45,7 @@ export function SurgeryPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [form, setForm] = useState(emptyForm)
   const [isCreating, setIsCreating] = useState(false)
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const loadSurgeries = useCallback(async () => {
@@ -89,10 +109,6 @@ export function SurgeryPage() {
 
   const onDelete = useCallback(
     async (surgeryId: string) => {
-      if (!window.confirm('Delete this surgery?')) {
-        return
-      }
-
       setDeletingId(surgeryId)
       setStatus('')
 
@@ -110,6 +126,7 @@ export function SurgeryPage() {
         }
       } finally {
         setDeletingId(null)
+        setPendingDeleteId(null)
       }
     },
     [loadSurgeries, request],
@@ -117,105 +134,106 @@ export function SurgeryPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-6">
-      <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
-        <div className="mb-4 flex items-center justify-between gap-2">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Surgery</h1>
-            <p className="mt-2 text-sm text-gray-600">Manage your surgery information here.</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => void loadSurgeries()}
-            disabled={isLoading}
-            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-[#AA1C41] hover:text-[#AA1C41] disabled:cursor-not-allowed disabled:opacity-70"
-          >
+      <PageHeader
+        title="Surgeries"
+        description="Manage your surgery information here."
+        actions={
+          <Button variant="secondary" onClick={() => void loadSurgeries()} isLoading={isLoading}>
             {isLoading ? 'Refreshing...' : 'Refresh List'}
-          </button>
-        </div>
+          </Button>
+        }
+      />
 
+      <Card>
         <form className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3 sm:items-end" onSubmit={onCreate}>
-          <label className="flex flex-col gap-1 text-sm text-gray-700">
-            Name *
-            <input
+          <Field label="Name" htmlFor="surgery-name" required>
+            <Input
+              id="surgery-name"
               type="text"
               value={form.name}
               onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
               required
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#AA1C41] focus:outline-none"
             />
-          </label>
-          <label className="flex flex-col gap-1 text-sm text-gray-700">
-            Date *
-            <input
+          </Field>
+          <Field label="Date" htmlFor="surgery-date" required>
+            <Input
+              id="surgery-date"
               type="date"
               value={form.date}
               onChange={(event) => setForm((prev) => ({ ...prev, date: event.target.value }))}
               required
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#AA1C41] focus:outline-none"
             />
-          </label>
-          <label className="flex flex-col gap-1 text-sm text-gray-700">
-            Notes
-            <input
+          </Field>
+          <Field label="Notes" htmlFor="surgery-notes">
+            <Input
+              id="surgery-notes"
               type="text"
               value={form.notes}
               onChange={(event) => setForm((prev) => ({ ...prev, notes: event.target.value }))}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#AA1C41] focus:outline-none"
             />
-          </label>
+          </Field>
           <div className="sm:col-span-3">
-            <button
-              type="submit"
-              disabled={isCreating}
-              className="rounded-lg bg-[#AA1C41] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#8C1636] disabled:cursor-not-allowed disabled:opacity-70"
-            >
+            <Button type="submit" isLoading={isCreating}>
               {isCreating ? 'Adding...' : 'Add Surgery'}
-            </button>
+            </Button>
           </div>
         </form>
 
-        {status ? <p className="mb-4 text-sm text-gray-700">{status}</p> : null}
-
-        {isLoading ? <p className="text-sm text-gray-600">Loading surgeries...</p> : null}
-
-        {!isLoading && surgeries.length === 0 ? (
-          <p className="text-sm text-gray-600">No surgeries found.</p>
+        {status ? (
+          <Alert tone={inferStatusTone(status)} className="mb-4">
+            {status}
+          </Alert>
         ) : null}
 
-        {!isLoading && surgeries.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 text-sm">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Name</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Date</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Notes</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-700"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {surgeries.map((surgery) => (
-                  <tr key={surgery.id} className="bg-white hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium text-gray-900">{surgery.name}</td>
-                    <td className="px-4 py-3 text-gray-700">{formatDate(surgery.date)}</td>
-                    <td className="px-4 py-3 text-gray-700">{surgery.notes || '-'}</td>
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        type="button"
-                        onClick={() => void onDelete(surgery.id)}
-                        disabled={deletingId === surgery.id}
-                        className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-semibold text-red-600 transition hover:border-red-400 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-70"
-                      >
-                        {deletingId === surgery.id ? 'Deleting...' : 'Delete'}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : null}
-      </section>
+        {isLoading ? (
+          <SkeletonLines count={4} />
+        ) : surgeries.length === 0 ? (
+          <EmptyState icon={Stethoscope} title="No surgeries found." description="Add a surgery using the form above." />
+        ) : (
+          <Table>
+            <Thead>
+              <Tr>
+                <Th>Name</Th>
+                <Th>Date</Th>
+                <Th>Notes</Th>
+                <Th></Th>
+              </Tr>
+            </Thead>
+            <Tbody>
+              {surgeries.map((surgery) => (
+                <Tr key={surgery.id}>
+                  <Td className="font-medium text-gray-900">{surgery.name}</Td>
+                  <Td>{formatDate(surgery.date)}</Td>
+                  <Td>{surgery.notes || '-'}</Td>
+                  <Td className="text-right">
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={() => setPendingDeleteId(surgery.id)}
+                      disabled={deletingId === surgery.id}
+                    >
+                      {deletingId === surgery.id ? 'Deleting...' : 'Delete'}
+                    </Button>
+                  </Td>
+                </Tr>
+              ))}
+            </Tbody>
+          </Table>
+        )}
+      </Card>
+
+      <ConfirmDialog
+        open={pendingDeleteId !== null}
+        title="Delete this surgery?"
+        description="This action cannot be undone."
+        isLoading={deletingId !== null}
+        onCancel={() => setPendingDeleteId(null)}
+        onConfirm={() => {
+          if (pendingDeleteId) {
+            void onDelete(pendingDeleteId)
+          }
+        }}
+      />
     </div>
   )
 }

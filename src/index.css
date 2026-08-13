@@ -1,20 +1,32 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Archivo Black', ui-sans-serif, system-ui, sans-serif;
+
+  /* Brand scale, derived from the Yarlit Medical AI primary color #3D6B4C (Muted Sage) */
+  --color-primary-50: #f0f7f2;
+  --color-primary-100: #dcebe1;
+  --color-primary-200: #b7d6c2;
+  --color-primary-300: #8cba9e;
+  --color-primary-400: #609b78;
+  --color-primary-500: #4a8260;
+  --color-primary-600: #3d6b4c;
+  --color-primary-700: #2f5339;
+  --color-primary-800: #26422e;
+  --color-primary-900: #1c3222;
+
+  --shadow-brand: 0 12px 24px -12px rgb(61 107 76 / 0.35);
+}
+
 :root {
-  font-family: 'Manrope', sans-serif;
+  font-family: var(--font-sans);
   color: #1e293b;
   line-height: 1.5;
   font-weight: 400;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  
-  /* Primary color palette */
-  --color-primary: #AA1C41;
-  --color-primary-dark: #8A1735;
-  --color-primary-light: #D62551;
-  --color-primary-bg: #FFF1F4;
-  --color-primary-border: #FFD7E0;
 }
 
 * {
@@ -35,7 +47,7 @@ body {
 h1,
 h2,
 h3 {
-  font-family: 'Archivo Black', sans-serif;
+  font-family: var(--font-display);
   letter-spacing: 0.01em;
   margin-bottom: 0.7rem;
   color: #1e293b;
@@ -43,4 +55,19 @@ h3 {
 
 p {
   margin: 0;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 200ms ease-out;
 }

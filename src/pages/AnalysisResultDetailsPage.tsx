@@ -1,15 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import type { AnalysisResultItem, AnalysisRiskLevel } from '../types/api'
+import { ArrowLeft } from 'lucide-react'
+import type { AnalysisResultItem } from '../types/api'
 import { ApiRequestError } from '../lib/ApiRequestError'
 import { useAuth } from '../context/useAuth'
 import { getAnalysisResult } from '../service/analysisService'
-
-const riskBadgeClass: Record<AnalysisRiskLevel, string> = {
-  high: 'bg-red-100 text-red-800 border border-red-200',
-  medium: 'bg-amber-100 text-amber-800 border border-amber-200',
-  low: 'bg-emerald-100 text-emerald-800 border border-emerald-200',
-}
+import { Alert, Badge, Button, Card, LoadingRow, riskTone } from '../components/ui'
 
 function formatDate(value: string) {
   const date = new Date(value)
@@ -17,7 +13,7 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date)
 }
 
-function formatRiskLabel(riskLevel: AnalysisRiskLevel) {
+function formatRiskLabel(riskLevel: string) {
   return riskLevel.charAt(0).toUpperCase() + riskLevel.slice(1)
 }
 
@@ -62,23 +58,20 @@ export function AnalysisResultDetailsPage() {
   }, [loadResult])
 
   return (
-    <section className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto flex max-w-3xl flex-1 flex-col gap-6">
       <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => navigate('/analyze')}
-          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-[#AA1C41] hover:bg-[#FFF1F4] hover:text-[#AA1C41]"
-        >
-          ← Back
-        </button>
-        <h1 className="font-['Archivo_Black'] text-2xl text-gray-900">Analysis Detail</h1>
+        <Button variant="secondary" onClick={() => navigate('/analyze')}>
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </Button>
+        <h1 className="font-display text-2xl text-gray-900">Analysis Detail</h1>
       </div>
 
-      {isLoading && <p className="text-sm text-gray-600">Loading...</p>}
-      {!isLoading && status && <p className="text-sm text-red-700">{status}</p>}
+      {isLoading ? <LoadingRow label="Loading analysis result..." /> : null}
+      {!isLoading && status ? <Alert tone="danger">{status}</Alert> : null}
 
-      {!isLoading && result && (
-        <article className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-5">
+      {!isLoading && result ? (
+        <Card className="space-y-5">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
               <h2 className="text-2xl font-bold text-gray-900">{result.title}</h2>
@@ -86,9 +79,7 @@ export function AnalysisResultDetailsPage() {
                 {formatCategory(result.category)} • Created {formatDate(result.created_at)}
               </p>
             </div>
-            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${riskBadgeClass[result.risk_level]}`}>
-              {formatRiskLabel(result.risk_level)} Risk
-            </span>
+            <Badge tone={riskTone(result.risk_level)}>{formatRiskLabel(result.risk_level)} Risk</Badge>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
@@ -142,8 +133,8 @@ export function AnalysisResultDetailsPage() {
               </div>
             )}
           </section>
-        </article>
-      )}
-    </section>
+        </Card>
+      ) : null}
+    </div>
   )
 }

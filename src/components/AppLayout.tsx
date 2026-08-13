@@ -1,110 +1,203 @@
+import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import {
+  Activity,
+  Brain,
+  Clock,
+  FileText,
+  Home,
+  LogOut,
+  Menu,
+  MessageCircle,
+  Shield,
+  Stethoscope,
+  Syringe,
+  User,
+  X,
+} from 'lucide-react'
 import { useAuth } from '../context/useAuth'
+import { cn } from '../lib/cn'
+
+const navGroups = [
+  {
+    label: 'Overview',
+    items: [
+      { to: '/dashboard', label: 'Dashboard', icon: Home },
+      { to: '/timeline', label: 'Timeline', icon: Clock },
+    ],
+  },
+  {
+    label: 'Records',
+    items: [
+      { to: '/document', label: 'Documents', icon: FileText },
+      { to: '/analyze', label: 'Analyze', icon: Brain },
+      { to: '/allergy', label: 'Allergies', icon: Shield },
+      { to: '/vaccination', label: 'Vaccinations', icon: Syringe },
+      { to: '/surgery', label: 'Surgeries', icon: Stethoscope },
+    ],
+  },
+  {
+    label: 'Assistant',
+    items: [
+      { to: '/chat', label: 'Chat', icon: MessageCircle },
+      { to: '/profile', label: 'Profile', icon: User },
+    ],
+  },
+]
+
+const pageTitles: Array<[string, string]> = [
+  ['/dashboard', 'Dashboard'],
+  ['/timeline', 'Timeline'],
+  ['/document', 'Documents'],
+  ['/analyze', 'Analysis'],
+  ['/allergy', 'Allergies'],
+  ['/vaccination', 'Vaccinations'],
+  ['/surgery', 'Surgeries'],
+  ['/chat', 'Chat'],
+  ['/profile', 'Profile'],
+]
+
+function usePageTitle(pathname: string) {
+  const match = pageTitles.find(([prefix]) => pathname.startsWith(prefix))
+  return match ? match[1] : 'Medical AI Portal'
+}
+
+function Logo() {
+  return (
+    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary-600 to-primary-500 shadow-brand">
+      <Activity className="h-5 w-5 text-white" strokeWidth={2.5} />
+    </div>
+  )
+}
+
+function NavList({ onNavigate }: { onNavigate?: () => void }) {
+  const navClass = ({ isActive }: { isActive: boolean }) =>
+    cn(
+      'flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-semibold transition-all',
+      isActive
+        ? 'bg-primary-50 text-primary-700 shadow-sm ring-1 ring-inset ring-primary-200'
+        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
+    )
+
+  return (
+    <nav className="mt-8 flex flex-col gap-6" aria-label="Primary">
+      {navGroups.map((group) => (
+        <div key={group.label}>
+          <p className="mb-2 px-3.5 text-xs font-bold uppercase tracking-wider text-gray-400">{group.label}</p>
+          <div className="grid gap-1">
+            {group.items.map((item) => (
+              <NavLink key={item.to} to={item.to} className={navClass} onClick={onNavigate}>
+                <item.icon className="h-4 w-4 shrink-0" strokeWidth={2.25} />
+                {item.label}
+              </NavLink>
+            ))}
+          </div>
+        </div>
+      ))}
+    </nav>
+  )
+}
 
 export function AppLayout() {
   const { user, logout } = useAuth()
   const location = useLocation()
-  const pageTitle = location.pathname.includes('/workflow') ? 'Workflow Console' : 'Medical AI Portal'
+  const pageTitle = usePageTitle(location.pathname)
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false)
 
-  const navClass = ({ isActive }: { isActive: boolean }) =>
-    [
-      'rounded-lg border px-4 py-2.5 text-sm font-semibold transition-all',
-      isActive
-        ? 'border-[#AA1C41] bg-[#FFF1F4] text-[#AA1C41] shadow-sm'
-        : 'border-gray-200 bg-white text-gray-700 hover:border-[#AA1C41]/40 hover:bg-[#FFF1F4]/30 hover:text-[#AA1C41]',
-    ].join(' ')
+  useEffect(() => {
+    setIsMobileNavOpen(false)
+  }, [location.pathname])
 
   return (
     <div className="flex min-h-screen bg-gray-50 text-gray-900">
-      <aside className="hidden w-72 shrink-0 flex-col border-r border-gray-200 bg-white p-6 shadow-sm md:flex">
-        <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#AA1C41] to-[#D62551] shadow-lg shadow-[#AA1C41]/20">
-          <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-          </svg>
+      <aside className="hidden w-72 shrink-0 flex-col border-r border-gray-200 bg-white p-6 md:flex">
+        <div className="flex items-center gap-3">
+          <Logo />
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-primary-600">Medical AI</p>
+            <p className="text-sm font-semibold text-gray-900">Yarlit Portal</p>
+          </div>
         </div>
-        <p className="text-xs font-bold uppercase tracking-wider text-[#AA1C41]">Medical AI</p>
-        {/* <h1 className="mt-2 text-2xl leading-tight text-gray-900">Clinical Operations</h1>
-        <p className="mt-3 text-sm leading-relaxed text-gray-600">
-          Secure upload, analysis, dashboarding, and chat workflows for medical operations.
-        </p> */}
 
-        <nav className="mt-8 grid gap-2.5" aria-label="Primary">
-          <NavLink to="/dashboard" className={navClass}>
-            🏠 Dashboard
-          </NavLink>
-          <NavLink to="/timeline" className={navClass}>
-            🕒 Timeline
-          </NavLink>
-          <NavLink to="/document" className={navClass}>
-            📤 Document
-          </NavLink>
-          <NavLink to="/analyze" className={navClass}>
-            🧠 Analyze
-          </NavLink>
-          <NavLink to="/chat" className={navClass}>
-            💬 Chat
-          </NavLink>
-          {/* <NavLink to="/workflow" className={navClass}>
-            📊 Workflow
-          </NavLink> */}
-          <NavLink to="/allergy" className={navClass}>
-            ⚠️ Allergy
-          </NavLink>
-          <NavLink to="vaccination" className={navClass}>
-            💉 Vaccination
-          </NavLink>
-          <NavLink to="/surgery" className={navClass}>
-            🏥 Surgery
-          </NavLink>
-          <NavLink to="/profile" className={navClass}>
-            👤 Profile
-          </NavLink>
-        </nav>
+        <NavList />
 
         <button
           type="button"
-          className="mt-auto flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:border-[#AA1C41] hover:bg-[#FFF1F4] hover:text-[#AA1C41]"
+          className="mt-auto flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700"
           onClick={logout}
         >
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-          </svg>
+          <LogOut className="h-4 w-4" strokeWidth={2.25} />
           Logout
         </button>
       </aside>
 
+      {isMobileNavOpen ? (
+        <div className="fixed inset-0 z-40 md:hidden">
+          <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onClick={() => setIsMobileNavOpen(false)} />
+          <aside className="relative flex h-full w-72 max-w-[80vw] animate-fade-in flex-col bg-white p-6 shadow-2xl">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <Logo />
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-primary-600">Medical AI</p>
+                  <p className="text-sm font-semibold text-gray-900">Yarlit Portal</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                aria-label="Close menu"
+                className="rounded-lg p-2 text-gray-500 hover:bg-gray-100"
+                onClick={() => setIsMobileNavOpen(false)}
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <NavList onNavigate={() => setIsMobileNavOpen(false)} />
+
+            <button
+              type="button"
+              className="mt-auto flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700"
+              onClick={logout}
+            >
+              <LogOut className="h-4 w-4" strokeWidth={2.25} />
+              Logout
+            </button>
+          </aside>
+        </div>
+      ) : null}
+
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-30 border-b border-gray-200 bg-white/95 px-4 py-4 shadow-sm backdrop-blur-sm sm:px-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              {/* <p className="text-xs font-semibold uppercase tracking-wider text-[#AA1C41]">Production Workspace</p> */}
-              <h2 className="font-['Archivo_Black'] text-xl text-gray-900 sm:text-2xl">{pageTitle}</h2>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                aria-label="Open menu"
+                className="-ml-1.5 rounded-lg p-2 text-gray-500 hover:bg-gray-100 md:hidden"
+                onClick={() => setIsMobileNavOpen(true)}
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+              <h2 className="font-display text-xl text-gray-900 sm:text-2xl">{pageTitle}</h2>
             </div>
             <div className="flex items-center gap-3">
               {user ? (
                 <div className="flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
-                  <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                  <div className="h-2 w-2 rounded-full bg-emerald-500" />
                   {user.full_name}
                 </div>
               ) : null}
               <button
                 type="button"
-                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-[#AA1C41] hover:bg-[#FFF1F4] hover:text-[#AA1C41] md:hidden"
+                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 md:hidden"
                 onClick={logout}
+                aria-label="Logout"
               >
-                Logout
+                <LogOut className="h-4 w-4" />
               </button>
             </div>
           </div>
-
-          <nav className="mt-3 flex gap-2 md:hidden" aria-label="Primary">
-            <NavLink to="/workflow" className={navClass}>
-              Workflow
-            </NavLink>
-            <NavLink to="/auth" className={navClass}>
-              Auth
-            </NavLink>
-          </nav>
         </header>
 
         <main className="flex-1 p-4 sm:p-6">

@@ -1,9 +1,28 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
+import { Shield } from 'lucide-react'
 import { ApiRequestError } from '../lib/ApiRequestError'
 import { useAuth } from '../context/useAuth'
 import { createAllergy, deleteAllergy, listAllergies } from '../service/allergyService'
 import type { AllergyItem } from '../types/api'
+import {
+  Alert,
+  Button,
+  Card,
+  ConfirmDialog,
+  EmptyState,
+  Field,
+  Input,
+  PageHeader,
+  SkeletonLines,
+  Table,
+  Tbody,
+  Td,
+  Th,
+  Thead,
+  Tr,
+  inferStatusTone,
+} from '../components/ui'
 
 const emptyForm = { substance: '', severity: '', reaction: '' }
 
@@ -15,6 +34,7 @@ export function AllergyPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [form, setForm] = useState(emptyForm)
   const [isCreating, setIsCreating] = useState(false)
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const loadAllergies = useCallback(async () => {
@@ -78,10 +98,6 @@ export function AllergyPage() {
 
   const onDelete = useCallback(
     async (allergyId: string) => {
-      if (!window.confirm('Delete this allergy?')) {
-        return
-      }
-
       setDeletingId(allergyId)
       setStatus('')
 
@@ -99,6 +115,7 @@ export function AllergyPage() {
         }
       } finally {
         setDeletingId(null)
+        setPendingDeleteId(null)
       }
     },
     [loadAllergies, request],
@@ -106,106 +123,107 @@ export function AllergyPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-6">
-      <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
-        <div className="mb-4 flex items-center justify-between gap-2">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Allergy</h1>
-            <p className="mt-2 text-sm text-gray-600">Manage your allergy information here.</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => void loadAllergies()}
-            disabled={isLoading}
-            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-[#AA1C41] hover:text-[#AA1C41] disabled:cursor-not-allowed disabled:opacity-70"
-          >
+      <PageHeader
+        title="Allergies"
+        description="Manage your allergy information here."
+        actions={
+          <Button variant="secondary" onClick={() => void loadAllergies()} isLoading={isLoading}>
             {isLoading ? 'Refreshing...' : 'Refresh List'}
-          </button>
-        </div>
+          </Button>
+        }
+      />
 
+      <Card>
         <form className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3 sm:items-end" onSubmit={onCreate}>
-          <label className="flex flex-col gap-1 text-sm text-gray-700">
-            Substance *
-            <input
+          <Field label="Substance" htmlFor="allergy-substance" required>
+            <Input
+              id="allergy-substance"
               type="text"
               value={form.substance}
               onChange={(event) => setForm((prev) => ({ ...prev, substance: event.target.value }))}
               required
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#AA1C41] focus:outline-none"
             />
-          </label>
-          <label className="flex flex-col gap-1 text-sm text-gray-700">
-            Severity *
-            <input
+          </Field>
+          <Field label="Severity" htmlFor="allergy-severity" required>
+            <Input
+              id="allergy-severity"
               type="text"
               value={form.severity}
               onChange={(event) => setForm((prev) => ({ ...prev, severity: event.target.value }))}
               required
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#AA1C41] focus:outline-none"
             />
-          </label>
-          <label className="flex flex-col gap-1 text-sm text-gray-700">
-            Reaction *
-            <input
+          </Field>
+          <Field label="Reaction" htmlFor="allergy-reaction" required>
+            <Input
+              id="allergy-reaction"
               type="text"
               value={form.reaction}
               onChange={(event) => setForm((prev) => ({ ...prev, reaction: event.target.value }))}
               required
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#AA1C41] focus:outline-none"
             />
-          </label>
+          </Field>
           <div className="sm:col-span-3">
-            <button
-              type="submit"
-              disabled={isCreating}
-              className="rounded-lg bg-[#AA1C41] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#8C1636] disabled:cursor-not-allowed disabled:opacity-70"
-            >
+            <Button type="submit" isLoading={isCreating}>
               {isCreating ? 'Adding...' : 'Add Allergy'}
-            </button>
+            </Button>
           </div>
         </form>
 
-        {status ? <p className="mb-4 text-sm text-gray-700">{status}</p> : null}
-
-        {isLoading ? <p className="text-sm text-gray-600">Loading allergies...</p> : null}
-
-        {!isLoading && allergies.length === 0 ? (
-          <p className="text-sm text-gray-600">No allergies found.</p>
+        {status ? (
+          <Alert tone={inferStatusTone(status)} className="mb-4">
+            {status}
+          </Alert>
         ) : null}
 
-        {!isLoading && allergies.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 text-sm">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Substance</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Severity</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Reaction</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-700"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {allergies.map((allergy) => (
-                  <tr key={allergy.id} className="bg-white hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium text-gray-900">{allergy.substance}</td>
-                    <td className="px-4 py-3 text-gray-700">{allergy.severity}</td>
-                    <td className="px-4 py-3 text-gray-700">{allergy.reaction}</td>
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        type="button"
-                        onClick={() => void onDelete(allergy.id)}
-                        disabled={deletingId === allergy.id}
-                        className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-semibold text-red-600 transition hover:border-red-400 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-70"
-                      >
-                        {deletingId === allergy.id ? 'Deleting...' : 'Delete'}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : null}
-      </section>
+        {isLoading ? (
+          <SkeletonLines count={4} />
+        ) : allergies.length === 0 ? (
+          <EmptyState icon={Shield} title="No allergies found." description="Add an allergy using the form above." />
+        ) : (
+          <Table>
+            <Thead>
+              <Tr>
+                <Th>Substance</Th>
+                <Th>Severity</Th>
+                <Th>Reaction</Th>
+                <Th></Th>
+              </Tr>
+            </Thead>
+            <Tbody>
+              {allergies.map((allergy) => (
+                <Tr key={allergy.id}>
+                  <Td className="font-medium text-gray-900">{allergy.substance}</Td>
+                  <Td>{allergy.severity}</Td>
+                  <Td>{allergy.reaction}</Td>
+                  <Td className="text-right">
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={() => setPendingDeleteId(allergy.id)}
+                      disabled={deletingId === allergy.id}
+                    >
+                      {deletingId === allergy.id ? 'Deleting...' : 'Delete'}
+                    </Button>
+                  </Td>
+                </Tr>
+              ))}
+            </Tbody>
+          </Table>
+        )}
+      </Card>
+
+      <ConfirmDialog
+        open={pendingDeleteId !== null}
+        title="Delete this allergy?"
+        description="This action cannot be undone."
+        isLoading={deletingId !== null}
+        onCancel={() => setPendingDeleteId(null)}
+        onConfirm={() => {
+          if (pendingDeleteId) {
+            void onDelete(pendingDeleteId)
+          }
+        }}
+      />
     </div>
   )
 }
