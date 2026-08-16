@@ -40,7 +40,6 @@ export type DocumentDetails = DocumentItem & {
   medications: MedicationItem[]
   lab_results: Array<Record<string, unknown>>
   diagnosis_text: string | null
-  clinical_notes: string[]
 }
 
 export type UploadResult = {
@@ -162,27 +161,46 @@ export type ChatHistoryResponse = {
   }>
 }
 
-export type AllergyItem = {
+export type MedicalRecordType =
+  | 'ALLERGY'
+  | 'MEDICATION'
+  | 'LAB_RESULT'
+  | 'VACCINATION'
+  | 'SURGERY'
+  | 'DIAGNOSIS'
+  | 'CONDITION'
+  | 'PROCEDURE'
+  | 'FAMILY_HISTORY'
+
+export type MedicalRecordStatus =
+  | 'needs_review'
+  | 'user_edited'
+  | 'verified'
+  | 'rejected'
+  | 'conflict_requires_review'
+  | 'processing'
+  | 'extracted'
+
+export type MedicalRecord = {
   id: string
-  substance: string
-  severity: string
-  reaction: string
+  record_type: MedicalRecordType | string
+  status: MedicalRecordStatus
+  data: Record<string, unknown>
+  source_document_id: string | null
+  recorded_at: string | null
+  current_version: number
+  conflict_with_record_id: string | null
+  created_at: string
+  updated_at: string
 }
 
-export type VaccinationItem = {
+export type RecordTypeDefinition = {
   id: string
-  user_id: string
+  code: string
   name: string
-  date_administered: string
-  is_next_due: boolean
-  next_due_date: string | null
-}
-
-export type SurgeryItem = {
-  id: string
-  name: string
-  date: string
-  notes: string
+  description: string
+  json_schema: Record<string, unknown>
+  is_active: boolean
 }
 
 export type UserProfile = {

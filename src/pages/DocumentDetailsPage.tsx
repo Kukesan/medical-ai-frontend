@@ -185,19 +185,6 @@ export function DocumentDetailsPage() {
                 </pre>
               )}
             </div>
-
-            <div>
-              <h2 className="mb-2 text-base font-semibold text-gray-900">Clinical Notes</h2>
-              {details.clinical_notes.length === 0 ? (
-                <p className="text-sm text-gray-600">No clinical notes extracted.</p>
-              ) : (
-                <ul className="list-inside list-disc space-y-1 text-sm text-gray-700">
-                  {details.clinical_notes.map((note, index) => (
-                    <li key={`${note}-${index}`}>{note}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
           </div>
         ) : null}
       </Card>
