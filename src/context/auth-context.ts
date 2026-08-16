@@ -1,6 +1,6 @@
 import { createContext } from 'react'
 import type { AppUser } from '../types/api'
-import type { AuthRequest } from './auth-request'
+import type { AuthRequest, AuthTextRequest } from './auth-request'
 
 export type AuthContextValue = {
   apiOrigin: string
@@ -15,6 +15,7 @@ export type AuthContextValue = {
   fetchMe: () => Promise<AppUser>
   logout: () => void
   request: AuthRequest
+  requestText: AuthTextRequest
 }
 
 export const AuthContext = createContext<AuthContextValue | undefined>(undefined)

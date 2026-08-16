@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import type { AppUser, AuthTokens } from '../types/api'
 import { AuthContext } from './auth-context'
 import { buildApiBase, persistStoredAuth, persistStoredOrigin, readStoredAuth, readStoredOrigin } from './auth-storage'
-import { createAuthRequest } from './auth-request'
+import { createAuthRequest, createAuthTextRequest } from './auth-request'
 import { fetchCurrentUser, loginUser, registerUser } from '../service/authService'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -64,6 +64,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [accessToken, apiBase, logout, refreshTokens],
   )
 
+  const requestText = useMemo(
+    () =>
+      createAuthTextRequest({
+        apiBase,
+        getAccessToken: () => accessToken,
+        refreshTokens,
+        logout,
+      }),
+    [accessToken, apiBase, logout, refreshTokens],
+  )
+
   const register = useCallback(
     async (payload: { email: string; full_name: string; password: string }) => {
       return registerUser(request, payload)
@@ -104,6 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       fetchMe,
       logout,
       request,
+      requestText,
     }),
     [
       accessToken,
@@ -116,6 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       refreshToken,
       register,
       request,
+      requestText,
       setApiOrigin,
       user,
     ],

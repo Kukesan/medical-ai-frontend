@@ -1,5 +1,5 @@
-import type { AuthRequest } from '../context/auth-request'
-import type { ConfirmUploadResponse, DocumentDetails, DocumentItem, PresignedUploadResponse, UploadResult } from '../types/api'
+import type { AuthRequest, AuthTextRequest } from '../context/auth-request'
+import type { ConfirmUploadResponse, DocumentItem, PresignedUploadResponse, UploadResult } from '../types/api'
 
 export function uploadDocuments(request: AuthRequest, files: FileList) {
   const formData = new FormData()
@@ -69,6 +69,6 @@ export function listDocuments(request: AuthRequest) {
   return request<DocumentItem[]>('/documents')
 }
 
-export function getDocumentById(request: AuthRequest, documentId: string) {
-  return request<DocumentDetails>(`/documents/${documentId}`)
+export function getDocumentHtml(requestText: AuthTextRequest, documentId: string) {
+  return requestText(`/documents/${documentId}`)
 }

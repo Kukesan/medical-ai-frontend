@@ -2,6 +2,7 @@ import type { AuthTokens, ApiErrorPayload } from '../types/api'
 import { ApiRequestError } from '../lib/ApiRequestError'
 
 export type AuthRequest = <T>(path: string, init?: RequestInit, auth?: boolean) => Promise<T>
+export type AuthTextRequest = (path: string, init?: RequestInit, auth?: boolean) => Promise<string>
 
 async function readErrorMessage(response: Response): Promise<string> {
   try {
@@ -37,8 +38,8 @@ type CreateAuthRequestOptions = {
   logout: () => void
 }
 
-export function createAuthRequest({ apiBase, getAccessToken, refreshTokens, logout }: CreateAuthRequestOptions) {
-  return async function request<T>(path: string, init: RequestInit = {}, auth = true): Promise<T> {
+function createFetchWithAuth({ apiBase, getAccessToken, refreshTokens, logout }: CreateAuthRequestOptions) {
+  return async function fetchWithAuth(path: string, init: RequestInit = {}, auth = true): Promise<Response> {
     const runFetch = async (token?: string) => {
       const headers = new Headers(init.headers)
       const isFormData = init.body instanceof FormData
@@ -71,11 +72,30 @@ export function createAuthRequest({ apiBase, getAccessToken, refreshTokens, logo
       throw new ApiRequestError(response.status, await readErrorMessage(response))
     }
 
+    return response
+  }
+}
+
+export function createAuthRequest(options: CreateAuthRequestOptions) {
+  const fetchWithAuth = createFetchWithAuth(options)
+
+  return async function request<T>(path: string, init: RequestInit = {}, auth = true): Promise<T> {
+    const response = await fetchWithAuth(path, init, auth)
+
     if (response.status === 204 || response.headers.get('Content-Length') === '0') {
       return undefined as T
     }
 
     const text = await response.text()
     return (text ? JSON.parse(text) : undefined) as T
+  }
+}
+
+export function createAuthTextRequest(options: CreateAuthRequestOptions): AuthTextRequest {
+  const fetchWithAuth = createFetchWithAuth(options)
+
+  return async function requestText(path: string, init: RequestInit = {}, auth = true): Promise<string> {
+    const response = await fetchWithAuth(path, init, auth)
+    return response.text()
   }
 }
