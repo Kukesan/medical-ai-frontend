@@ -194,6 +194,12 @@ export type MedicalRecord = {
   updated_at: string
 }
 
+export type GroupedMedicalRecords = {
+  record_type: string
+  record_type_name: string
+  records: MedicalRecord[]
+}
+
 export type RecordTypeDefinition = {
   id: string
   code: string

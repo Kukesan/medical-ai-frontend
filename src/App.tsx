@@ -14,6 +14,7 @@ import { SurgeryPage } from './pages/SurgaryPage'
 import { VaccinationPage } from './pages/VaccinationPage'
 import { AllergyPage } from './pages/AllergyPage'
 import { TimelinePage } from './pages/TimelinePage'
+import { MedicalRecordsPage } from './pages/MedicalRecordsPage'
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
         <Route path="/analyze" element={<AnalyzePage />} />
         <Route path="/analyze/:resultId" element={<AnalysisResultDetailsPage />} />
         <Route path="/chat" element={<ChatPage />} />
+        <Route path="/medical-records" element={<MedicalRecordsPage />} />
         <Route path="allergy" element={<AllergyPage />} />
         <Route path="vaccination" element={<VaccinationPage />} />
         <Route path="/surgery" element={<SurgeryPage />} />

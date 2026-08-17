@@ -1,5 +1,6 @@
 import type { AuthRequest } from '../context/auth-request'
 import type {
+  GroupedMedicalRecords,
   MedicalRecord,
   MedicalRecordStatus,
   MedicalRecordType,
@@ -12,6 +13,14 @@ export type ListMedicalRecordsParams = {
   documentId?: string
   limit?: number
   offset?: number
+}
+
+export function getGroupedMedicalRecords(request: AuthRequest, status?: MedicalRecordStatus) {
+  const query = new URLSearchParams()
+  if (status) query.set('status', status)
+
+  const queryString = query.toString()
+  return request<GroupedMedicalRecords[]>(`/medical-records/grouped${queryString ? `?${queryString}` : ''}`)
 }
 
 export function listMedicalRecords(request: AuthRequest, params: ListMedicalRecordsParams = {}) {

@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation } from "react-router-dom";
 import {
   Activity,
   Brain,
+  ClipboardList,
   Clock,
   FileText,
   Home,
@@ -34,6 +35,7 @@ const navGroups = [
     label: "Records",
     items: [
       { to: "/document", label: "Documents", icon: FileText },
+      { to: "/medical-records", label: "Medical Records", icon: ClipboardList },
       { to: "/allergy", label: "Allergies", icon: Shield },
       { to: "/vaccination", label: "Vaccinations", icon: Syringe },
       { to: "/surgery", label: "Surgeries", icon: Stethoscope },
@@ -52,6 +54,7 @@ const pageTitles: Array<[string, string]> = [
   ["/dashboard", "Dashboard"],
   ["/timeline", "Timeline"],
   ["/document", "Documents"],
+  ["/medical-records", "Medical Records"],
   ["/analyze", "Analysis"],
   ["/allergy", "Allergies"],
   ["/vaccination", "Vaccinations"],
