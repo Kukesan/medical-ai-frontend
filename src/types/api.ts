@@ -11,13 +11,22 @@ export type AuthTokens = {
   token_type: string
 }
 
+export type ProcessingStatus =
+  | 'uploaded'
+  | 'ocr_completed'
+  | 'extracted'
+  | 'analyzed'
+  | 'user_edited'
+  | 'accepted'
+  | 'failed'
+
 export type DocumentItem = {
   id: string
   file_name: string
   mime_type: string
   file_size: number
   document_type: string
-  processing_status: string
+  processing_status: ProcessingStatus
   created_at: string
 }
 
@@ -37,9 +46,7 @@ export type DocumentDetails = DocumentItem & {
   visit_date: string | null
   doctor_name: string | null
   hospital_name: string | null
-  medications: MedicationItem[]
-  lab_results: Array<Record<string, unknown>>
-  diagnosis_text: string | null
+  extraction_result: Record<string, unknown> | null
 }
 
 export type UploadResult = {

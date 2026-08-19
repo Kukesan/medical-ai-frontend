@@ -1,5 +1,11 @@
 import type { AuthRequest, AuthTextRequest } from '../context/auth-request'
-import type { BatchConfirmUploadResponse, DocumentItem, PresignedUploadResponse, UploadResult } from '../types/api'
+import type {
+  BatchConfirmUploadResponse,
+  DocumentDetails,
+  DocumentItem,
+  PresignedUploadResponse,
+  UploadResult,
+} from '../types/api'
 
 export function uploadDocuments(request: AuthRequest, files: File[]) {
   const formData = new FormData()
@@ -97,4 +103,25 @@ export function listDocuments(request: AuthRequest) {
 
 export function getDocumentHtml(requestText: AuthTextRequest, documentId: string) {
   return requestText(`/documents/${documentId}`)
+}
+
+export function getDocument(request: AuthRequest, documentId: string) {
+  return request<DocumentDetails>(`/documents/${documentId}/detail`)
+}
+
+export function updateDocumentExtraction(
+  request: AuthRequest,
+  documentId: string,
+  extractionResult: Record<string, unknown>,
+) {
+  return request<DocumentDetails>(`/documents/${documentId}/extraction`, {
+    method: 'PATCH',
+    body: JSON.stringify({ extraction_result: extractionResult }),
+  })
+}
+
+export function acceptDocument(request: AuthRequest, documentId: string) {
+  return request<DocumentDetails>(`/documents/${documentId}/accept`, {
+    method: 'POST',
+  })
 }

@@ -8,9 +8,9 @@ import type { DocumentItem, UploadResult } from '../types/api'
 import { useNavigate } from 'react-router-dom'
 import {
   Alert,
-  Badge,
   Button,
   Card,
+  DocumentStatusBadge,
   EmptyState,
   PageHeader,
   Table,
@@ -278,7 +278,7 @@ export function DocumentPage() {
                   <Td>{doc.document_type}</Td>
                   <Td>{formatBytes(doc.file_size)}</Td>
                   <Td>
-                    <Badge tone="neutral">{doc.processing_status}</Badge>
+                    <DocumentStatusBadge status={doc.processing_status} />
                   </Td>
                   <Td>{formatDate(doc.created_at)}</Td>
                 </Tr>
