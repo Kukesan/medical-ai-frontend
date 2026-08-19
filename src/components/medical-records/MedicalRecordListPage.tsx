@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useState } from 'react'
 import type { LucideIcon } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { useMedicalRecords } from '../../hooks/useMedicalRecords'
 import type { MedicalRecord, MedicalRecordType } from '../../types/api'
 import {
@@ -56,6 +57,7 @@ export function MedicalRecordListPage({
 }: MedicalRecordListPageProps) {
   const { records, isLoading, status, busyId, reload, save, verify, reject, resolveConflict } =
     useMedicalRecords(recordType)
+  const navigate = useNavigate()
 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editValues, setEditValues] = useState<EditValues>({})
@@ -68,6 +70,17 @@ export function MedicalRecordListPage({
       setEditValues(initialEditValues(record, fields))
     },
     [fields],
+  )
+
+  const handleEditClick = useCallback(
+    (record: MedicalRecord) => {
+      if (record.source_document_id) {
+        navigate(`/document/${record.source_document_id}`)
+        return
+      }
+      startEdit(record)
+    },
+    [navigate, startEdit],
   )
 
   const cancelEdit = useCallback(() => {
@@ -202,8 +215,13 @@ export function MedicalRecordListPage({
                           </Button>
                         ) : (
                           <div className="flex flex-wrap justify-end gap-2">
-                            <Button variant="secondary" size="sm" onClick={() => startEdit(record)} disabled={isBusy}>
-                              Edit
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => handleEditClick(record)}
+                              disabled={isBusy}
+                            >
+                              {record.source_document_id ? 'View Source' : 'Edit'}
                             </Button>
                             {canVerify ? (
                               <>
