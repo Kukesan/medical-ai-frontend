@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { FormEvent } from 'react'
+import type { ChangeEvent, FormEvent } from 'react'
 import { UploadCloud } from 'lucide-react'
 import { ApiRequestError } from '../lib/ApiRequestError'
 import { useAuth } from '../context/useAuth'
@@ -39,6 +39,8 @@ function formatBytes(bytes: number) {
   return `${size.toFixed(size < 10 && unitIndex > 0 ? 1 : 0)} ${units[unitIndex]}`
 }
 
+const MAX_FILES = 5
+
 function formatDate(value: string) {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) {
@@ -58,6 +60,7 @@ export function DocumentPage() {
 
   const [documents, setDocuments] = useState<DocumentItem[]>([])
   const [uploadResult, setUploadResult] = useState<UploadResult | null>(null)
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [status, setStatus] = useState('')
   const [isLoadingDocuments, setIsLoadingDocuments] = useState(true)
   const [isUploading, setIsUploading] = useState(false)
@@ -85,12 +88,39 @@ export function DocumentPage() {
     void loadDocuments()
   }, [loadDocuments])
 
+  const onFileChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const chosen = Array.from(event.target.files ?? [])
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+      if (chosen.length === 0) {
+        return
+      }
+
+      const combined = [...selectedFiles, ...chosen]
+
+      if (combined.length > MAX_FILES) {
+        setSelectedFiles(combined.slice(0, MAX_FILES))
+        setStatus(`You can upload up to ${MAX_FILES} files at once. Only the first ${MAX_FILES} were kept.`)
+        return
+      }
+
+      setSelectedFiles(combined)
+      setStatus('')
+    },
+    [selectedFiles],
+  )
+
+  const removeSelectedFile = useCallback((index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index))
+  }, [])
+
   const onUpload = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault()
-      const files = fileInputRef.current?.files
 
-      if (!files || files.length === 0) {
+      if (selectedFiles.length === 0) {
         setStatus('Please choose at least one file to upload.')
         return
       }
@@ -100,12 +130,13 @@ export function DocumentPage() {
       setUploadResult(null)
 
       try {
-        const result = await uploadDocumentsViaS3(request, files)
+        const result = await uploadDocumentsViaS3(request, selectedFiles)
         setUploadResult(result)
         const uploadedCount = result.uploaded.length
         const failedCount = result.failed.length
         setStatus(`Upload complete: ${uploadedCount} uploaded, ${failedCount} failed.`)
 
+        setSelectedFiles([])
         if (fileInputRef.current) {
           fileInputRef.current.value = ''
         }
@@ -123,7 +154,7 @@ export function DocumentPage() {
         setIsUploading(false)
       }
     },
-    [loadDocuments, request],
+    [loadDocuments, request, selectedFiles],
   )
 
   return (
@@ -138,9 +169,40 @@ export function DocumentPage() {
           >
             <UploadCloud className="h-8 w-8 text-primary-500" />
             <span className="text-sm font-semibold text-gray-700">Click to choose files, or drag them here</span>
-            <span className="text-xs text-gray-500">Supports multiple files at once</span>
-            <input ref={fileInputRef} id="document-files" type="file" name="files" multiple className="sr-only" />
+            <span className="text-xs text-gray-500">Up to {MAX_FILES} files at once</span>
+            <input
+              ref={fileInputRef}
+              id="document-files"
+              type="file"
+              name="files"
+              multiple
+              className="sr-only"
+              onChange={onFileChange}
+            />
           </label>
+
+          {selectedFiles.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {selectedFiles.map((file, index) => (
+                <span
+                  key={`${file.name}-${index}`}
+                  className="inline-flex items-center gap-1 rounded-full bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700"
+                >
+                  {file.name}
+                  <span className="text-primary-400">({formatBytes(file.size)})</span>
+                  <button
+                    type="button"
+                    onClick={() => removeSelectedFile(index)}
+                    className="ml-1 text-primary-400 hover:text-primary-700"
+                    aria-label={`Remove ${file.name}`}
+                  >
+                    &times;
+                  </button>
+                </span>
+              ))}
+            </div>
+          ) : null}
+
           <div className="flex flex-wrap gap-3">
             <Button type="submit" isLoading={isUploading}>
               {isUploading ? 'Uploading...' : 'Upload Documents'}

@@ -64,8 +64,17 @@ export type PresignedUploadResponse = {
 export type ConfirmUploadResponse = {
   document_id: string
   processing_status: string
-  ocr_text: string
+  // ocr_text: string
   file_size: number
+}
+
+export type BatchConfirmUploadResponse = {
+  documents: ConfirmUploadResponse[]
+  failed: Array<{
+    document_id?: string
+    reason?: string
+    error?: string
+  }>
 }
 
 export type AnalysisRunResponse = {
@@ -194,10 +203,30 @@ export type MedicalRecord = {
   updated_at: string
 }
 
+export type MedicalRecordListItem = MedicalRecord
+
 export type GroupedMedicalRecords = {
   record_type: string
   record_type_name: string
   records: MedicalRecord[]
+}
+
+export type IntakeStatus = 'awaiting_clarification' | 'awaiting_confirmation' | 'completed' | 'abandoned'
+
+export type RecordIntakeResponse = {
+  id: string
+  status: IntakeStatus
+  record_type: string | null
+  record_type_name: string | null
+  is_new_record_type: boolean
+  data: Record<string, unknown>
+  missing_fields: string[]
+  pending_question: string | null
+  questions_asked: number
+  recorded_at: string | null
+  resulting_record_id: string | null
+  created_at: string
+  updated_at: string
 }
 
 export type RecordTypeDefinition = {

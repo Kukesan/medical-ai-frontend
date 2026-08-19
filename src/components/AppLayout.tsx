@@ -10,6 +10,7 @@ import {
   LogOut,
   Menu,
   MessageCircle,
+  PlusCircle,
   Shield,
   Stethoscope,
   Syringe,
@@ -34,11 +35,12 @@ const navGroups = [
   {
     label: "Records",
     items: [
-      { to: "/document", label: "Documents", icon: FileText },
+      { to: "/document", label: "Upload Documents", icon: FileText },
+      { to: "/record-intake", label: "Add Record", icon: PlusCircle },
       { to: "/medical-records", label: "Medical Records", icon: ClipboardList },
-      { to: "/allergy", label: "Allergies", icon: Shield },
-      { to: "/vaccination", label: "Vaccinations", icon: Syringe },
-      { to: "/surgery", label: "Surgeries", icon: Stethoscope },
+      // { to: "/allergy", label: "Allergies", icon: Shield },
+      // { to: "/vaccination", label: "Vaccinations", icon: Syringe },
+      // { to: "/surgery", label: "Surgeries", icon: Stethoscope },
     ],
   },
   {
@@ -53,6 +55,7 @@ const navGroups = [
 const pageTitles: Array<[string, string]> = [
   ["/dashboard", "Dashboard"],
   ["/timeline", "Timeline"],
+  ["/record-intake", "Add Record"],
   ["/document", "Documents"],
   ["/medical-records", "Medical Records"],
   ["/analyze", "Analysis"],
