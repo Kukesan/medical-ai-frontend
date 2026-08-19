@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Brain } from 'lucide-react'
-import type { AnalysisResultItem, AnalysisRiskLevel } from '../types/api'
+import type { AnalysisResultListItem, AnalysisRiskLevel } from '../types/api'
 import { ApiRequestError } from '../lib/ApiRequestError'
 import { useAuth } from '../context/useAuth'
 import { analyzeMedicationInteractions, getAnalysisResults } from '../service/analysisService'
@@ -28,7 +28,7 @@ export function AnalyzePage() {
   const { request } = useAuth()
   const navigate = useNavigate()
 
-  const [results, setResults] = useState<AnalysisResultItem[]>([])
+  const [results, setResults] = useState<AnalysisResultListItem[]>([])
   const [status, setStatus] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isAnalyzing, setIsAnalyzing] = useState(false)

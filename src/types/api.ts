@@ -102,6 +102,17 @@ export type AnalysisEvidenceItem = {
   snippet: string
 }
 
+export type AnalysisResultListItem = {
+  id: string
+  user_id: string
+  category: string
+  risk_level: AnalysisRiskLevel
+  title: string
+  description: string
+  confidence: number
+  created_at: string
+}
+
 export type AnalysisResultItem = {
   id: string
   user_id: string
@@ -115,6 +126,31 @@ export type AnalysisResultItem = {
   evidence: AnalysisEvidenceItem[]
   recommendation: string
   created_at: string
+}
+
+export type DoctorSearchRequest = {
+  analysis_result_id?: string
+  specialty_override?: string
+  location: string
+  availability: string
+}
+
+export type DoctorResult = {
+  name: string
+  specialty: string
+  address: string
+  distance_km: number | null
+  rating: number | null
+  user_ratings_total: number | null
+  phone: string | null
+  maps_url: string | null
+}
+
+export type DoctorSearchResponse = {
+  specialty: string
+  availability: string
+  doctors: DoctorResult[]
+  message: string | null
 }
 
 export type LabTrendsResponse = {
