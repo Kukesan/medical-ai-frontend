@@ -67,7 +67,7 @@ export function AnalyzePage() {
 
     try {
       const response = await getAnalysisResults(request)
-      setResults(response)
+      setResults(Array.isArray(response) ? response.filter((item): item is AnalysisResultListItem => Boolean(item)) : [])
     } catch (error) {
       if (error instanceof ApiRequestError) {
         setStatus(`Error ${error.status}: ${error.message}`)
