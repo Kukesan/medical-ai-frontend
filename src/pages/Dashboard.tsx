@@ -18,7 +18,7 @@ import { Badge, Button, Card, EmptyState, PageHeader, SkeletonLines, riskTone } 
 type HealthTip = {
   icon: LucideIcon
   title: string
-  description: string
+  description: string 
 }
 
 function formatCategory(category: string) {
@@ -206,23 +206,17 @@ export function DashboardPage() {
             <EmptyState icon={AlertTriangle} title="No alerts found." />
           ) : (
             <div className="flex flex-col gap-3">
-              {alerts.map((alert, index) => (
-                <div key={`${alert.category}-${index}`} className="rounded-xl border border-gray-200 p-4">
+              {alerts.map((alert) => (
+                <div key={alert.id} className="rounded-xl border border-gray-200 p-4">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-sm font-semibold text-gray-900">{formatCategory(alert.category)}</p>
-                    {alert.assessment ? (
-                      <Badge tone={riskTone(alert.assessment.risk_level)}>{alert.assessment.risk_level}</Badge>
-                    ) : null}
+                    <p className="text-sm font-semibold text-gray-900">{alert.title}</p>
+                    <Badge tone={riskTone(alert.risk_level)}>{alert.risk_level}</Badge>
                   </div>
-                  <p className="mt-2 text-sm text-gray-700">{alert.details}</p>
-                  {alert.assessment ? (
-                    <>
-                      <p className="mt-2 text-sm text-gray-600">{alert.assessment.explanation}</p>
-                      <p className="mt-2 text-xs font-medium text-gray-500">
-                        Confidence: {Math.round(alert.assessment.confidence * 100)}%
-                      </p>
-                    </>
-                  ) : null}
+                  {/* <p className="mt-2 text-xs font-medium text-gray-500">{formatCategory(alert.category)}</p>
+                  <p className="mt-2 text-sm text-gray-700">{alert.description}</p>
+                  <p className="mt-2 text-xs font-medium text-gray-500">
+                    Confidence: {Math.round(alert.confidence * 100)}%
+                  </p> */}
                 </div>
               ))}
             </div>

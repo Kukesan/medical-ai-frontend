@@ -175,18 +175,14 @@ export type LabTrendsResponse = {
 }
 
 export type AlertItem = {
+  id: string
+  user_id: string
   category: string
-  details: string
-  assessment: {
-    risk_level: string
-    explanation: string
-    confidence: number
-    evidence: Array<{
-      source_document_id: string
-      snippet: string
-      page: number
-    }>
-  } | null
+  risk_level: string
+  title: string
+  description: string
+  confidence: number
+  created_at: string
 }
 
 export type ChatContextType = 'document' | 'analysis_result'
