@@ -74,8 +74,8 @@ export function MedicalRecordListPage({
 
   const handleEditClick = useCallback(
     (record: MedicalRecord) => {
-      if (record.source_document_id) {
-        navigate(`/document/${record.source_document_id}`)
+      if (record.document_id) {
+        navigate(`/document/${record.document_id}`)
         return
       }
       startEdit(record)
@@ -221,7 +221,7 @@ export function MedicalRecordListPage({
                               onClick={() => handleEditClick(record)}
                               disabled={isBusy}
                             >
-                              {record.source_document_id ? 'View Source' : 'Edit'}
+                              {record.document_id ? 'View Source' : 'Edit'}
                             </Button>
                             {canVerify ? (
                               <>

@@ -1,9 +1,9 @@
-import { useState } from 'react'
-import { ChevronDown, ClipboardList, Pencil } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { ChevronDown, ClipboardList, Pencil, Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useGroupedMedicalRecords } from '../hooks/useGroupedMedicalRecords'
 import { useAuth } from '../context/useAuth'
-import { updateMedicalRecord } from '../service/medicalRecordService'
+import { getMedicalRecord, updateMedicalRecord } from '../service/medicalRecordService'
 import { ApiRequestError } from '../lib/ApiRequestError'
 import type { MedicalRecord } from '../types/api'
 import {
@@ -11,6 +11,7 @@ import {
   Badge,
   Button,
   Card,
+  ConfirmDialog,
   EmptyState,
   Field,
   Input,
@@ -65,17 +66,42 @@ type EditRecordModalProps = {
   onSaved: () => void
 }
 
+function toEditValues(data: Record<string, unknown>): Record<string, string | boolean> {
+  const values: Record<string, string | boolean> = {}
+  Object.entries(data).forEach(([key, value]) => {
+    values[key] = typeof value === 'boolean' ? value : formatValue(value) === '-' ? '' : String(value)
+  })
+  return values
+}
+
 function EditRecordModal({ record, onClose, onSaved }: EditRecordModalProps) {
   const { request } = useAuth()
-  const [values, setValues] = useState<Record<string, string | boolean>>(() => {
-    const initial: Record<string, string | boolean> = {}
-    Object.entries(record.data).forEach(([key, value]) => {
-      initial[key] = typeof value === 'boolean' ? value : formatValue(value) === '-' ? '' : String(value)
-    })
-    return initial
-  })
+  const [values, setValues] = useState<Record<string, string | boolean>>(() => toEditValues(record.data))
   const [isSaving, setIsSaving] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    let cancelled = false
+    setIsLoading(true)
+    getMedicalRecord(request, record.id)
+      .then((fresh) => {
+        if (!cancelled) {
+          setValues(toEditValues(fresh.data))
+        }
+      })
+      .catch(() => {
+        // Fall back to the record data already in hand.
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoading(false)
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [record.id, request])
 
   const handleSave = async () => {
     setIsSaving(true)
@@ -118,32 +144,36 @@ function EditRecordModal({ record, onClose, onSaved }: EditRecordModalProps) {
             {error}
           </Alert>
         ) : null}
-        <div className="mt-4 flex max-h-96 flex-col gap-4 overflow-y-auto pr-1">
-          {Object.entries(values).map(([key, value]) => (
-            <Field key={key} label={formatLabel(key)} htmlFor={`edit-${record.id}-${key}`}>
-              {typeof value === 'boolean' ? (
-                <div className="flex items-center gap-2">
-                  <Checkbox
+        {isLoading ? (
+          <p className="mt-4 text-sm text-gray-400">Loading latest record...</p>
+        ) : (
+          <div className="mt-4 flex max-h-96 flex-col gap-4 overflow-y-auto pr-1">
+            {Object.entries(values).map(([key, value]) => (
+              <Field key={key} label={formatLabel(key)} htmlFor={`edit-${record.id}-${key}`}>
+                {typeof value === 'boolean' ? (
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id={`edit-${record.id}-${key}`}
+                      checked={value}
+                      onChange={(event) => setValues((prev) => ({ ...prev, [key]: event.target.checked }))}
+                    />
+                  </div>
+                ) : (
+                  <Input
                     id={`edit-${record.id}-${key}`}
-                    checked={value}
-                    onChange={(event) => setValues((prev) => ({ ...prev, [key]: event.target.checked }))}
+                    value={value}
+                    onChange={(event) => setValues((prev) => ({ ...prev, [key]: event.target.value }))}
                   />
-                </div>
-              ) : (
-                <Input
-                  id={`edit-${record.id}-${key}`}
-                  value={value}
-                  onChange={(event) => setValues((prev) => ({ ...prev, [key]: event.target.value }))}
-                />
-              )}
-            </Field>
-          ))}
-        </div>
+                )}
+              </Field>
+            ))}
+          </div>
+        )}
         <div className="mt-6 flex justify-end gap-3">
           <Button variant="secondary" onClick={onClose} disabled={isSaving}>
             Cancel
           </Button>
-          <Button onClick={() => void handleSave()} isLoading={isSaving}>
+          <Button onClick={() => void handleSave()} isLoading={isSaving} disabled={isLoading}>
             Save
           </Button>
         </div>
@@ -152,23 +182,55 @@ function EditRecordModal({ record, onClose, onSaved }: EditRecordModalProps) {
   )
 }
 
-function RecordCard({ record, onEdit }: { record: MedicalRecord; onEdit: (record: MedicalRecord) => void }) {
+function RecordCard({
+  record,
+  onEdit,
+  onVerify,
+  onDelete,
+  isVerifying,
+}: {
+  record: MedicalRecord
+  onEdit: (record: MedicalRecord) => void
+  onVerify: (record: MedicalRecord) => void
+  onDelete: (record: MedicalRecord) => void
+  isVerifying: boolean
+}) {
   const entries = Object.entries(record.data)
+  const canVerify = record.status === 'needs_review' || record.status === 'user_edited'
+  const isUserInput = !record.document_id
 
   return (
     <div className="rounded-lg border border-gray-200 bg-gray-50/60 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="text-xs font-medium text-gray-500">Recorded {formatDate(record.recorded_at)}</span>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-medium text-gray-500">Recorded {formatDate(record.recorded_at)}</span>
+          {isUserInput ? <Badge tone="primary">User Input</Badge> : null}
+        </div>
         <div className="flex items-center gap-2">
-          {/* <RecordStatusBadge status={record.status} /> */}
+          <RecordStatusBadge status={record.status} />
+          {canVerify ? (
+            <Button size="sm" onClick={() => onVerify(record)} isLoading={isVerifying}>
+              Verify
+            </Button>
+          ) : null}
           <button
             type="button"
             className="inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-gray-600 transition hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700"
             onClick={() => onEdit(record)}
           >
             <Pencil className="h-3.5 w-3.5" />
-            {record.source_document_id ? 'View Source' : 'Edit'}
+            {record.document_id ? 'View Source' : 'Edit'}
           </button>
+          {isUserInput ? (
+            <button
+              type="button"
+              className="inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-gray-600 transition hover:border-red-300 hover:bg-red-50 hover:text-red-700"
+              onClick={() => onDelete(record)}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Delete
+            </button>
+          ) : null}
         </div>
       </div>
       {entries.length > 0 ? (
@@ -188,9 +250,10 @@ function RecordCard({ record, onEdit }: { record: MedicalRecord; onEdit: (record
 }
 
 export function MedicalRecordsPage() {
-  const { groups, isLoading, status, reload } = useGroupedMedicalRecords()
+  const { groups, isLoading, status, busyId, reload, verify, remove } = useGroupedMedicalRecords()
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const [editingRecord, setEditingRecord] = useState<MedicalRecord | null>(null)
+  const [pendingDeleteRecord, setPendingDeleteRecord] = useState<MedicalRecord | null>(null)
   const navigate = useNavigate()
 
   const toggleGroup = (recordType: string) => {
@@ -206,11 +269,27 @@ export function MedicalRecordsPage() {
   }
 
   const handleEdit = (record: MedicalRecord) => {
-    if (record.source_document_id) {
-      navigate(`/document/${record.source_document_id}`)
+    if (record.document_id) {
+      navigate(`/document/${record.document_id}`)
       return
     }
     setEditingRecord(record)
+  }
+
+  const handleVerify = (record: MedicalRecord) => {
+    void verify(record.id)
+  }
+
+  const handleDelete = (record: MedicalRecord) => {
+    setPendingDeleteRecord(record)
+  }
+
+  const confirmDelete = async () => {
+    if (!pendingDeleteRecord) {
+      return
+    }
+    await remove(pendingDeleteRecord.id)
+    setPendingDeleteRecord(null)
   }
 
   return (
@@ -268,7 +347,14 @@ export function MedicalRecordsPage() {
                       <p className="text-sm text-gray-400">No records in this group.</p>
                     ) : (
                       group.records.map((record) => (
-                        <RecordCard key={record.id} record={record} onEdit={handleEdit} />
+                        <RecordCard
+                          key={record.id}
+                          record={record}
+                          onEdit={handleEdit}
+                          onVerify={handleVerify}
+                          onDelete={handleDelete}
+                          isVerifying={busyId === record.id}
+                        />
                       ))
                     )}
                   </div>
@@ -289,6 +375,16 @@ export function MedicalRecordsPage() {
           }}
         />
       ) : null}
+
+      <ConfirmDialog
+        open={pendingDeleteRecord !== null}
+        title="Delete this record?"
+        description="This user-entered record will be permanently deleted. This action cannot be undone."
+        confirmLabel="Delete"
+        isLoading={pendingDeleteRecord !== null && busyId === pendingDeleteRecord.id}
+        onCancel={() => setPendingDeleteRecord(null)}
+        onConfirm={() => void confirmDelete()}
+      />
     </div>
   )
 }

@@ -10,7 +10,6 @@ import type {
 export type ListMedicalRecordsParams = {
   recordType?: MedicalRecordType | string
   status?: MedicalRecordStatus
-  documentId?: string
   limit?: number
   offset?: number
 }
@@ -27,7 +26,6 @@ export function listMedicalRecords(request: AuthRequest, params: ListMedicalReco
   const query = new URLSearchParams()
   if (params.recordType) query.set('record_type', params.recordType)
   if (params.status) query.set('status', params.status)
-  if (params.documentId) query.set('document_id', params.documentId)
   if (params.limit !== undefined) query.set('limit', String(params.limit))
   if (params.offset !== undefined) query.set('offset', String(params.offset))
 
@@ -55,6 +53,12 @@ export function verifyMedicalRecord(request: AuthRequest, recordId: string) {
 export function rejectMedicalRecord(request: AuthRequest, recordId: string) {
   return request<MedicalRecord>(`/medical-records/${recordId}/reject`, {
     method: 'POST',
+  })
+}
+
+export function deleteMedicalRecord(request: AuthRequest, recordId: string) {
+  return request<void>(`/medical-records/${recordId}`, {
+    method: 'DELETE',
   })
 }
 

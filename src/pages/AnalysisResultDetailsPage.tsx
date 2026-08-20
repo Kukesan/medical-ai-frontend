@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, ExternalLink, MapPin, Phone, Star } from 'lucide-react'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
+import { ArrowLeft, ExternalLink, MapPin, Phone, Star, Stethoscope } from 'lucide-react'
 import type { AnalysisResultItem, DoctorResult } from '../types/api'
 import { ApiRequestError } from '../lib/ApiRequestError'
 import { useAuth } from '../context/useAuth'
@@ -30,6 +30,7 @@ function formatCategory(category: string) {
 export function AnalysisResultDetailsPage() {
   const { resultId } = useParams<{ resultId: string }>()
   const navigate = useNavigate()
+  const routerLocation = useLocation()
   const { request } = useAuth()
 
   const [result, setResult] = useState<AnalysisResultItem | null>(null)
@@ -68,6 +69,11 @@ export function AnalysisResultDetailsPage() {
     void loadResult()
   }, [loadResult])
 
+  useEffect(() => {
+    if (isLoading || !result || routerLocation.hash !== '#doctor-recommendation') return
+    document.getElementById('doctor-recommendation')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [isLoading, result, routerLocation.hash])
+
   const handleDoctorSearch = useCallback(async () => {
     if (!result || !location.trim() || !availability.trim()) return
     setIsSearchingDoctors(true)
@@ -96,7 +102,7 @@ export function AnalysisResultDetailsPage() {
   }, [availability, location, request, result])
 
   const needsDoctorRecommendation =
-    !!result && (result.risk_level === 'high' || result.confidence < LOW_CONFIDENCE_THRESHOLD)
+    !!result && (result.risk_level === 'high' || result.risk_level === 'medium' || result.confidence < LOW_CONFIDENCE_THRESHOLD)
 
   return (
     <div className="mx-auto flex max-w-3xl flex-1 flex-col gap-6">
@@ -120,7 +126,17 @@ export function AnalysisResultDetailsPage() {
                 {formatCategory(result.category)} • Created {formatDate(result.created_at)}
               </p>
             </div>
-            <Badge tone={riskTone(result.risk_level)}>{formatRiskLabel(result.risk_level)} Risk</Badge>
+            <div className="flex items-center gap-2">
+              {needsDoctorRecommendation ? (
+                <span
+                  title="Doctor recommendation suggested"
+                  className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 text-amber-600"
+                >
+                  <Stethoscope className="h-4 w-4" />
+                </span>
+              ) : null}
+              <Badge tone={riskTone(result.risk_level)}>{formatRiskLabel(result.risk_level)} Risk</Badge>
+            </div>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
@@ -178,7 +194,7 @@ export function AnalysisResultDetailsPage() {
       ) : null}
 
       {!isLoading && result && needsDoctorRecommendation ? (
-        <Card className="space-y-4">
+        <Card id="doctor-recommendation" className="space-y-4">
           <div>
             <h2 className="text-lg font-bold text-gray-900">Find a Nearby Doctor</h2>
             <p className="mt-1 text-sm text-gray-600">

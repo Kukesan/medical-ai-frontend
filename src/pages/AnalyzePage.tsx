@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlertTriangle, Brain, Calendar, ChevronRight, Gauge, Layers, ShieldAlert } from 'lucide-react'
+import { AlertTriangle, Brain, Calendar, ChevronRight, Gauge, Layers, ShieldAlert, Stethoscope } from 'lucide-react'
 import type { AnalysisResultListItem, AnalysisRiskLevel } from '../types/api'
 import { ApiRequestError } from '../lib/ApiRequestError'
 import { useAuth } from '../context/useAuth'
@@ -24,6 +24,12 @@ const riskIconStyle: Record<AnalysisRiskLevel, string> = {
   high: 'bg-red-50 text-red-600',
   medium: 'bg-amber-50 text-amber-600',
   low: 'bg-emerald-50 text-emerald-600',
+}
+
+const LOW_CONFIDENCE_THRESHOLD = 0.8
+
+function needsDoctorRecommendation(item: AnalysisResultListItem) {
+  return item.risk_level === 'high' || item.risk_level === 'medium' || item.confidence < LOW_CONFIDENCE_THRESHOLD
 }
 
 function formatRiskLabel(riskLevel: AnalysisRiskLevel) {
@@ -175,11 +181,18 @@ export function AnalyzePage() {
         ) : (
           <div className="mt-4 space-y-3">
             {prioritizedResults.map((result) => (
-              <button
+              <div
                 key={result.id}
-                type="button"
+                role="button"
+                tabIndex={0}
                 onClick={() => navigate(`/analyze/${result.id}`)}
-                className="group relative flex w-full items-start gap-3 overflow-hidden rounded-xl border border-gray-200 bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-md"
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault()
+                    navigate(`/analyze/${result.id}`)
+                  }
+                }}
+                className="group relative flex w-full cursor-pointer items-start gap-3 overflow-hidden rounded-xl border border-gray-200 bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-md"
               >
                 <span className={cn('absolute inset-y-0 left-0 w-1', riskAccent[result.risk_level])} />
 
@@ -199,7 +212,22 @@ export function AnalyzePage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="truncate text-sm font-semibold text-gray-900">{result.title}</p>
-                    <Badge tone={riskTone(result.risk_level)}>{formatRiskLabel(result.risk_level)}</Badge>
+                    <div className="flex items-center gap-2">
+                      {needsDoctorRecommendation(result) ? (
+                        <button
+                          type="button"
+                          title="Doctor recommendation suggested"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            navigate(`/analyze/${result.id}#doctor-recommendation`)
+                          }}
+                          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600 transition hover:bg-amber-200"
+                        >
+                          <Stethoscope className="h-3.5 w-3.5" />
+                        </button>
+                      ) : null}
+                      <Badge tone={riskTone(result.risk_level)}>{formatRiskLabel(result.risk_level)}</Badge>
+                    </div>
                   </div>
 
                   <div className="mt-1 mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
@@ -218,7 +246,7 @@ export function AnalyzePage() {
                 </div>
 
                 <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-gray-300 transition group-hover:translate-x-0.5 group-hover:text-primary-400" />
-              </button>
+              </div>
             ))}
           </div>
         )}

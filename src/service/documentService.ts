@@ -3,6 +3,7 @@ import type {
   BatchConfirmUploadResponse,
   DocumentDetails,
   DocumentItem,
+  DocumentRecordItem,
   PresignedUploadResponse,
   UploadResult,
 } from '../types/api'
@@ -101,6 +102,20 @@ export function listDocuments(request: AuthRequest) {
   return request<DocumentItem[]>('/documents')
 }
 
+export type ListDocumentRecordsParams = {
+  recordType?: string
+  documentId?: string
+}
+
+export function listDocumentRecords(request: AuthRequest, params: ListDocumentRecordsParams = {}) {
+  const query = new URLSearchParams()
+  if (params.recordType) query.set('record_type', params.recordType)
+  if (params.documentId) query.set('document_id', params.documentId)
+
+  const queryString = query.toString()
+  return request<DocumentRecordItem[]>(`/documents/records${queryString ? `?${queryString}` : ''}`)
+}
+
 export function getDocumentHtml(requestText: AuthTextRequest, documentId: string) {
   return requestText(`/documents/${documentId}`)
 }
@@ -123,5 +138,11 @@ export function updateDocumentExtraction(
 export function acceptDocument(request: AuthRequest, documentId: string) {
   return request<DocumentDetails>(`/documents/${documentId}/accept`, {
     method: 'POST',
+  })
+}
+
+export function deleteDocument(request: AuthRequest, documentId: string) {
+  return request<void>(`/documents/${documentId}`, {
+    method: 'DELETE',
   })
 }

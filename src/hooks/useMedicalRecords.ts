@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../context/useAuth'
 import { ApiRequestError } from '../lib/ApiRequestError'
+import { documentRecordToMedicalRecord } from '../lib/documentRecordAdapter'
+import { listDocumentRecords } from '../service/documentService'
 import {
   listMedicalRecords,
   rejectMedicalRecord,
@@ -32,8 +34,15 @@ export function useMedicalRecords(recordType: MedicalRecordType) {
   const reload = useCallback(async () => {
     setIsLoading(true)
     try {
-      const list = await listMedicalRecords(request, { recordType })
-      setRecords(list)
+      const [manualRecords, documentRecords] = await Promise.all([
+        listMedicalRecords(request, { recordType }),
+        listDocumentRecords(request, { recordType }),
+      ])
+      const merged = [
+        ...manualRecords,
+        ...documentRecords.map((record, index) => documentRecordToMedicalRecord(record, index)),
+      ].sort((a, b) => (b.recorded_at ?? b.created_at).localeCompare(a.recorded_at ?? a.created_at))
+      setRecords(merged)
       setStatus('')
     } catch (error) {
       setStatus(describeError(error, 'Unable to load records'))

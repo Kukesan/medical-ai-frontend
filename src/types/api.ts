@@ -49,6 +49,13 @@ export type DocumentDetails = DocumentItem & {
   extraction_result: Record<string, unknown> | null
 }
 
+export type DocumentRecordItem = {
+  record_type: string
+  data: Record<string, unknown>
+  document_id: string
+  recorded_at: string | null
+}
+
 export type UploadResult = {
   uploaded: Array<{
     file_name: string
@@ -238,7 +245,7 @@ export type MedicalRecord = {
   record_type: MedicalRecordType | string
   status: MedicalRecordStatus
   data: Record<string, unknown>
-  source_document_id: string | null
+  document_id: string | null
   recorded_at: string | null
   current_version: number
   conflict_with_record_id: string | null

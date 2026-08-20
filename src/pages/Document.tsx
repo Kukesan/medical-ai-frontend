@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
-import { UploadCloud } from 'lucide-react'
+import { Trash2, UploadCloud } from 'lucide-react'
 import { ApiRequestError } from '../lib/ApiRequestError'
 import { useAuth } from '../context/useAuth'
-import { listDocuments, uploadDocumentsViaS3 } from '../service/documentService'
+import { deleteDocument, listDocuments, uploadDocumentsViaS3 } from '../service/documentService'
 import type { DocumentItem, UploadResult } from '../types/api'
 import { useNavigate } from 'react-router-dom'
 import {
   Alert,
   Button,
   Card,
+  ConfirmDialog,
   DocumentStatusBadge,
   EmptyState,
   PageHeader,
@@ -64,6 +65,8 @@ export function DocumentPage() {
   const [status, setStatus] = useState('')
   const [isLoadingDocuments, setIsLoadingDocuments] = useState(true)
   const [isUploading, setIsUploading] = useState(false)
+  const [pendingDeleteDocument, setPendingDeleteDocument] = useState<DocumentItem | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const loadDocuments = useCallback(async () => {
     setIsLoadingDocuments(true)
@@ -132,9 +135,7 @@ export function DocumentPage() {
       try {
         const result = await uploadDocumentsViaS3(request, selectedFiles)
         setUploadResult(result)
-        const uploadedCount = result.uploaded.length
-        const failedCount = result.failed.length
-        setStatus(`Upload complete: ${uploadedCount} uploaded, ${failedCount} failed.`)
+        setStatus('')
 
         setSelectedFiles([])
         if (fileInputRef.current) {
@@ -156,6 +157,29 @@ export function DocumentPage() {
     },
     [loadDocuments, request, selectedFiles],
   )
+
+  const confirmDeleteDocument = useCallback(async () => {
+    if (!pendingDeleteDocument) {
+      return
+    }
+
+    setIsDeleting(true)
+    try {
+      await deleteDocument(request, pendingDeleteDocument.id)
+      setPendingDeleteDocument(null)
+      await loadDocuments()
+    } catch (error) {
+      if (error instanceof ApiRequestError) {
+        setStatus(`Error ${error.status}: ${error.message}`)
+      } else if (error instanceof Error) {
+        setStatus(error.message)
+      } else {
+        setStatus('Failed to delete document')
+      }
+    } finally {
+      setIsDeleting(false)
+    }
+  }, [loadDocuments, pendingDeleteDocument, request])
 
   return (
     <div className="flex flex-1 flex-col gap-6">
@@ -221,7 +245,7 @@ export function DocumentPage() {
 
         {uploadResult && uploadResult.uploaded.length > 0 ? (
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
-            <span>You can analyze your uploaded documents on the Analyze page.</span>
+            <span>Please wait while your documents finish uploading and processing before analyzing them.</span>
             <Button size="sm" onClick={() => void navigate('/analyze')}>
               Go to Analyze
             </Button>
@@ -261,6 +285,7 @@ export function DocumentPage() {
                 <Th>Size</Th>
                 <Th>Status</Th>
                 <Th>Created</Th>
+                <Th>Actions</Th>
               </Tr>
             </Thead>
             <Tbody>
@@ -281,12 +306,36 @@ export function DocumentPage() {
                     <DocumentStatusBadge status={doc.processing_status} />
                   </Td>
                   <Td>{formatDate(doc.created_at)}</Td>
+                  <Td>
+                    <button
+                      type="button"
+                      onClick={() => setPendingDeleteDocument(doc)}
+                      className="inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-gray-600 transition hover:border-red-300 hover:bg-red-50 hover:text-red-700"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Delete
+                    </button>
+                  </Td>
                 </Tr>
               ))}
             </Tbody>
           </Table>
         )}
       </Card>
+
+      <ConfirmDialog
+        open={pendingDeleteDocument !== null}
+        title="Delete this document?"
+        description={
+          pendingDeleteDocument
+            ? `"${pendingDeleteDocument.file_name}" will be permanently deleted. This action cannot be undone.`
+            : undefined
+        }
+        confirmLabel="Delete"
+        isLoading={isDeleting}
+        onCancel={() => setPendingDeleteDocument(null)}
+        onConfirm={() => void confirmDeleteDocument()}
+      />
     </div>
   )
 }
