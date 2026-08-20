@@ -49,24 +49,19 @@ const navGroups = [
   },
 ];
 
-const pageTitles: Array<[string, string]> = [
-  ["/dashboard", "Dashboard"],
-  ["/timeline", "Timeline"],
-  ["/record-intake", "Add Record"],
-  ["/document", "Documents"],
-  ["/medical-records", "Medical Records"],
-  ["/analyze", "Analysis"],
-  ["/allergy", "Allergies"],
-  ["/vaccination", "Vaccinations"],
-  ["/surgery", "Surgeries"],
-  ["/chat", "Chat"],
-  ["/profile", "Profile"],
-];
-
-function usePageTitle(pathname: string) {
-  const match = pageTitles.find(([prefix]) => pathname.startsWith(prefix));
-  return match ? match[1] : "Medical AI Portal";
-}
+// const pageTitles: Array<[string, string]> = [
+//   ["/dashboard", "Dashboard"],
+//   ["/timeline", "Timeline"],
+//   ["/record-intake", "Add Record"],
+//   ["/document", "Documents"],
+//   ["/medical-records", "Medical Records"],
+//   ["/analyze", "Analysis"],
+//   ["/allergy", "Allergies"],
+//   ["/vaccination", "Vaccinations"],
+//   ["/surgery", "Surgeries"],
+//   ["/chat", "Chat"],
+//   ["/profile", "Profile"],
+// ];
 
 function Logo() {
   return (
@@ -114,7 +109,6 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
 export function AppLayout() {
   const { user, logout } = useAuth();
   const location = useLocation();
-  const pageTitle = usePageTitle(location.pathname);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   useEffect(() => {

@@ -8,12 +8,6 @@ import { analyzeMedicationInteractions, getAnalysisResults } from '../service/an
 import { Alert, Badge, Button, Card, EmptyState, PageHeader, SkeletonLines, riskTone } from '../components/ui'
 import { cn } from '../lib/cn'
 
-const riskOrder: Record<AnalysisRiskLevel, number> = {
-  high: 0,
-  medium: 1,
-  low: 2,
-}
-
 const riskAccent: Record<AnalysisRiskLevel, string> = {
   high: 'bg-red-500',
   medium: 'bg-amber-500',
