@@ -160,7 +160,7 @@ function RecordCard({ record, onEdit }: { record: MedicalRecord; onEdit: (record
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="text-xs font-medium text-gray-500">Recorded {formatDate(record.recorded_at)}</span>
         <div className="flex items-center gap-2">
-          <RecordStatusBadge status={record.status} />
+          {/* <RecordStatusBadge status={record.status} /> */}
           <button
             type="button"
             className="inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-gray-600 transition hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700"

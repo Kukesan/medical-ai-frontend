@@ -1,16 +1,29 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Brain } from 'lucide-react'
+import { AlertTriangle, Brain, Calendar, ChevronRight, Gauge, Layers, ShieldAlert } from 'lucide-react'
 import type { AnalysisResultListItem, AnalysisRiskLevel } from '../types/api'
 import { ApiRequestError } from '../lib/ApiRequestError'
 import { useAuth } from '../context/useAuth'
 import { analyzeMedicationInteractions, getAnalysisResults } from '../service/analysisService'
 import { Alert, Badge, Button, Card, EmptyState, PageHeader, SkeletonLines, riskTone } from '../components/ui'
+import { cn } from '../lib/cn'
 
 const riskOrder: Record<AnalysisRiskLevel, number> = {
   high: 0,
   medium: 1,
   low: 2,
+}
+
+const riskAccent: Record<AnalysisRiskLevel, string> = {
+  high: 'bg-red-500',
+  medium: 'bg-amber-500',
+  low: 'bg-emerald-500',
+}
+
+const riskIconStyle: Record<AnalysisRiskLevel, string> = {
+  high: 'bg-red-50 text-red-600',
+  medium: 'bg-amber-50 text-amber-600',
+  low: 'bg-emerald-50 text-emerald-600',
 }
 
 function formatRiskLabel(riskLevel: AnalysisRiskLevel) {
@@ -22,6 +35,14 @@ function formatCategory(category: string) {
     .split('_')
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ')
+}
+
+function formatDateTime(value: string) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return value
+  }
+  return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date)
 }
 
 export function AnalyzePage() {
@@ -81,11 +102,11 @@ export function AnalyzePage() {
 
   const prioritizedResults = useMemo(() => {
     return [...results].sort((a, b) => {
-      const riskDiff = riskOrder[a.risk_level] - riskOrder[b.risk_level]
-      if (riskDiff !== 0) return riskDiff
+      // const riskDiff = riskOrder[a.risk_level] - riskOrder[b.risk_level]
+      // if (riskDiff !== 0) return riskDiff
 
-      const confidenceDiff = b.confidence - a.confidence
-      if (confidenceDiff !== 0) return confidenceDiff
+      // const confidenceDiff = b.confidence - a.confidence
+      // if (confidenceDiff !== 0) return confidenceDiff
 
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     })
@@ -117,13 +138,25 @@ export function AnalyzePage() {
           </Alert>
         ) : null}
 
-        <div className="grid grid-cols-2 gap-2 rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm">
-          <p className="text-gray-700">
-            <span className="font-semibold text-gray-900">Important:</span> {importantCount}
-          </p>
-          <p className="text-gray-700">
-            <span className="font-semibold text-gray-900">Total:</span> {prioritizedResults.length}
-          </p>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flex items-center gap-3 rounded-xl border border-red-100 bg-red-50/60 p-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-red-600 ring-1 ring-inset ring-red-100">
+              <ShieldAlert className="h-4.5 w-4.5" />
+            </span>
+            <div>
+              <p className="text-lg font-semibold leading-none text-gray-900">{importantCount}</p>
+              <p className="mt-1 text-xs font-medium text-gray-500">Important</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 p-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-gray-600 ring-1 ring-inset ring-gray-200">
+              <Layers className="h-4.5 w-4.5" />
+            </span>
+            <div>
+              <p className="text-lg font-semibold leading-none text-gray-900">{prioritizedResults.length}</p>
+              <p className="mt-1 text-xs font-medium text-gray-500">Total</p>
+            </div>
+          </div>
         </div>
 
         {isLoading ? (
@@ -140,22 +173,51 @@ export function AnalyzePage() {
             className="mt-4"
           />
         ) : (
-          <div className="mt-4 space-y-2">
+          <div className="mt-4 space-y-3">
             {prioritizedResults.map((result) => (
               <button
                 key={result.id}
                 type="button"
                 onClick={() => navigate(`/analyze/${result.id}`)}
-                className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-left transition hover:border-primary-300 hover:bg-primary-50/40"
+                className="group relative flex w-full items-start gap-3 overflow-hidden rounded-xl border border-gray-200 bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-md"
               >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-sm font-semibold text-gray-900">{result.title}</p>
-                  <Badge tone={riskTone(result.risk_level)}>{formatRiskLabel(result.risk_level)}</Badge>
+                <span className={cn('absolute inset-y-0 left-0 w-1', riskAccent[result.risk_level])} />
+
+                <span
+                  className={cn(
+                    'flex h-10 w-10 shrink-0 items-center justify-center rounded-full',
+                    riskIconStyle[result.risk_level],
+                  )}
+                >
+                  {result.risk_level === 'low' ? (
+                    <Gauge className="h-5 w-5" />
+                  ) : (
+                    <AlertTriangle className="h-5 w-5" />
+                  )}
+                </span>
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="truncate text-sm font-semibold text-gray-900">{result.title}</p>
+                    <Badge tone={riskTone(result.risk_level)}>{formatRiskLabel(result.risk_level)}</Badge>
+                  </div>
+
+                  <div className="mt-1 mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
+                    <span className="font-medium text-gray-600">{formatCategory(result.category)}</span>
+                    <span className="inline-flex items-center gap-1">
+                      <Gauge className="h-3.5 w-3.5" />
+                      {Math.round(result.confidence * 100)}% confidence
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <Calendar className="h-3.5 w-3.5" />
+                      {formatDateTime(result.created_at)}
+                    </span>
+                  </div>
+
+                  <p className="mt-2 line-clamp-2 text-sm text-gray-700">{result.description}</p>
                 </div>
-                <p className="mt-1 text-xs text-gray-500">
-                  {formatCategory(result.category)} • Confidence {Math.round(result.confidence * 100)}%
-                </p>
-                <p className="mt-2 line-clamp-2 text-sm text-gray-700">{result.description}</p>
+
+                <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-gray-300 transition group-hover:translate-x-0.5 group-hover:text-primary-400" />
               </button>
             ))}
           </div>
