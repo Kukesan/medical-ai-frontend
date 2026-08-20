@@ -189,6 +189,8 @@ export type AlertItem = {
   } | null
 }
 
+export type ChatContextType = 'document' | 'analysis_result'
+
 export type ChatResponse = {
   session_id: string
   answer: string
@@ -202,12 +204,16 @@ export type ChatResponse = {
     message: string
     recommend_doctor_consult: boolean
   }
+  context_type?: ChatContextType | null
+  context_label?: string | null
 }
 
 export type ConversationSummary = {
   title: string
   session_id: string
   updated_at: string
+  context_type?: ChatContextType | null
+  context_label?: string | null
 }
 
 export type ChatHistoryResponse = {

@@ -1,5 +1,5 @@
 import type { AuthRequest } from '../context/auth-request'
-import type { ChatHistoryResponse, ChatResponse, ConversationSummary } from '../types/api'
+import type { ChatContextType, ChatHistoryResponse, ChatResponse, ConversationSummary } from '../types/api'
 
 export function getConversations(request: AuthRequest) {
   return request<ConversationSummary[]>('/consultant/conversations')
@@ -7,7 +7,12 @@ export function getConversations(request: AuthRequest) {
 
 export function askChatQuestion(
   request: AuthRequest,
-  payload: { question: string; session_id?: string },
+  payload: {
+    question: string
+    session_id?: string
+    context_type?: ChatContextType
+    context_id?: string
+  },
 ) {
   return request<ChatResponse>('/consultant', {
     method: 'POST',

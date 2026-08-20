@@ -4,11 +4,15 @@ import { MessageCircle, Plus, Send } from 'lucide-react'
 import { ApiRequestError } from '../lib/ApiRequestError'
 import { useAuth } from '../context/useAuth'
 import { askChatQuestion, getChatHistory, getConversations } from '../service/chatService'
-import type { ConversationSummary } from '../types/api'
-import { Card, EmptyState, Input, LoadingRow, PageHeader } from '../components/ui'
+import { listDocuments } from '../service/documentService'
+import { getAnalysisResults } from '../service/analysisService'
+import type { AnalysisResultListItem, ChatContextType, ConversationSummary, DocumentItem } from '../types/api'
+import { Card, EmptyState, Input, LoadingRow, PageHeader, Select } from '../components/ui'
 import { cn } from '../lib/cn'
 
 const CHAT_SESSION_STORAGE_KEY = 'medical_ai_chat_session_v1'
+
+type GroundingMode = 'general' | ChatContextType
 
 type ChatMessage = {
   role: string
@@ -49,6 +53,24 @@ export function ChatPage() {
   const [isSending, setIsSending] = useState(false)
   const [conversations, setConversations] = useState<ConversationSummary[]>([])
   const [isLoadingConversations, setIsLoadingConversations] = useState(false)
+  const [groundingMode, setGroundingMode] = useState<GroundingMode>('general')
+  const [groundingId, setGroundingId] = useState('')
+  const [documents, setDocuments] = useState<DocumentItem[]>([])
+  const [analysisResults, setAnalysisResults] = useState<AnalysisResultListItem[]>([])
+  const [activeContextLabel, setActiveContextLabel] = useState<string | null>(null)
+
+  useEffect(() => {
+    listDocuments(request)
+      .then(setDocuments)
+      .catch(() => {
+        // Grounding picker is optional; ignore failures silently.
+      })
+    getAnalysisResults(request)
+      .then(setAnalysisResults)
+      .catch(() => {
+        // Grounding picker is optional; ignore failures silently.
+      })
+  }, [request])
 
   const loadConversations = useCallback(() => {
     setIsLoadingConversations(true)
@@ -64,17 +86,25 @@ export function ChatPage() {
     loadConversations()
   }, [loadConversations])
 
-  const selectConversation = useCallback((nextSessionId: string) => {
-    setMessages([])
-    setStatus('')
-    setSessionId(nextSessionId)
-    sessionStorage.setItem(CHAT_SESSION_STORAGE_KEY, nextSessionId)
-  }, [])
+  const selectConversation = useCallback(
+    (nextSessionId: string) => {
+      setMessages([])
+      setStatus('')
+      setSessionId(nextSessionId)
+      sessionStorage.setItem(CHAT_SESSION_STORAGE_KEY, nextSessionId)
+      const conversation = conversations.find((c) => c.session_id === nextSessionId)
+      setActiveContextLabel(conversation?.context_label ?? null)
+    },
+    [conversations],
+  )
 
   const startNewConversation = useCallback(() => {
     setMessages([])
     setStatus('')
     setSessionId(null)
+    setActiveContextLabel(null)
+    setGroundingMode('general')
+    setGroundingId('')
     sessionStorage.removeItem(CHAT_SESSION_STORAGE_KEY)
   }, [])
 
@@ -141,11 +171,17 @@ export function ChatPage() {
         const response = await askChatQuestion(request, {
           question: trimmed,
           session_id: sessionId ?? undefined,
+          ...(!sessionId && groundingMode !== 'general' && groundingId
+            ? { context_type: groundingMode, context_id: groundingId }
+            : {}),
         })
 
         if (response.session_id !== sessionId) {
           setSessionId(response.session_id)
           sessionStorage.setItem(CHAT_SESSION_STORAGE_KEY, response.session_id)
+        }
+        if (response.context_label) {
+          setActiveContextLabel(response.context_label)
         }
 
         setMessages((prev) => [
@@ -175,7 +211,7 @@ export function ChatPage() {
         setIsSending(false)
       }
     },
-    [isSending, loadConversations, question, request, sessionId],
+    [groundingId, groundingMode, isSending, loadConversations, question, request, sessionId],
   )
 
   return (
@@ -217,6 +253,9 @@ export function ChatPage() {
                 >
                   <p className="truncate font-medium">{conversation.title}</p>
                   <p className="mt-0.5 text-xs text-gray-500">{formatDate(conversation.updated_at)}</p>
+                  {conversation.context_label ? (
+                    <p className="mt-0.5 truncate text-xs text-primary-600">{conversation.context_label}</p>
+                  ) : null}
                 </button>
               )
             })}
@@ -224,6 +263,47 @@ export function ChatPage() {
         </Card>
 
         <Card padded={false} className="flex flex-1 flex-col">
+          {sessionId === null ? (
+            <div className="flex flex-col gap-2 border-b border-gray-200 p-4 sm:flex-row sm:items-center sm:gap-3 sm:p-5">
+              <Select
+                value={groundingMode}
+                onChange={(event) => {
+                  setGroundingMode(event.target.value as GroundingMode)
+                  setGroundingId('')
+                }}
+                className="sm:w-56"
+              >
+                <option value="general">General chat</option>
+                <option value="document">Grounded in a document</option>
+                <option value="analysis_result">Grounded in an analysis result</option>
+              </Select>
+              {groundingMode === 'document' ? (
+                <Select value={groundingId} onChange={(event) => setGroundingId(event.target.value)} className="sm:w-64">
+                  <option value="">Select a document...</option>
+                  {documents.map((doc) => (
+                    <option key={doc.id} value={doc.id}>
+                      {doc.file_name}
+                    </option>
+                  ))}
+                </Select>
+              ) : null}
+              {groundingMode === 'analysis_result' ? (
+                <Select value={groundingId} onChange={(event) => setGroundingId(event.target.value)} className="sm:w-64">
+                  <option value="">Select an analysis result...</option>
+                  {analysisResults.map((result) => (
+                    <option key={result.id} value={result.id}>
+                      {result.title}
+                    </option>
+                  ))}
+                </Select>
+              ) : null}
+            </div>
+          ) : activeContextLabel ? (
+            <div className="border-b border-gray-200 px-5 py-2 text-xs font-medium text-primary-700 sm:px-6">
+              Grounded in: {activeContextLabel}
+            </div>
+          ) : null}
+
           <div className="flex-1 space-y-4 overflow-y-auto p-5 sm:p-6" style={{ minHeight: '20rem', maxHeight: '60vh' }}>
             {isLoadingHistory ? <LoadingRow label="Loading conversation..." /> : null}
 
@@ -267,7 +347,11 @@ export function ChatPage() {
             />
             <button
               type="submit"
-              disabled={isSending || !question.trim()}
+              disabled={
+                isSending ||
+                !question.trim() ||
+                (sessionId === null && groundingMode !== 'general' && !groundingId)
+              }
               className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Send className="h-4 w-4" />
