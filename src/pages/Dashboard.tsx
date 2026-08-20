@@ -1,50 +1,83 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Activity, Clock, FlaskConical, Pill } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import {
+  AlertTriangle,
+  Footprints,
+  HeartPulse,
+  Moon,
+  Stethoscope,
+  type LucideIcon,
+} from 'lucide-react'
 import { ApiRequestError } from '../lib/ApiRequestError'
 import { useAuth } from '../context/useAuth'
-import { getAlerts, getLabTrends, getMedications, getTimeline } from '../service/dashboardService'
-import type { AlertItem, LabTrendsResponse, TimelineEntry } from '../types/api'
-import { Badge, Button, Card, EmptyState, PageHeader, SkeletonLines, riskTone, trendTone } from '../components/ui'
+import { getAlerts } from '../service/dashboardService'
+import { listVitals } from '../service/vitalsService'
+import type { AlertItem, VitalsEntry } from '../types/api'
+import { Badge, Button, Card, EmptyState, PageHeader, SkeletonLines, riskTone } from '../components/ui'
 
-function formatDate(value: string) {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: 'medium',
-  }).format(date)
+type HealthTip = {
+  icon: LucideIcon
+  title: string
+  description: string
 }
+
+function formatCategory(category: string) {
+  return category
+    .split('_')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
+
+const healthTips: HealthTip[] = [
+  // {
+  //   icon: Droplets,
+  //   title: 'Stay Hydrated',
+  //   description: 'Drink at least 8 glasses of water a day to support circulation, digestion, and kidney health.',
+  // },
+  {
+    icon: Footprints,
+    title: 'Move Every Day',
+    description: 'Aim for 30 minutes of moderate activity, like walking, to keep your heart and joints healthy.',
+  },
+  // {
+  //   icon: Apple,
+  //   title: 'Eat the Rainbow',
+  //   description: 'Fill half your plate with fruits and vegetables for essential vitamins, minerals, and fiber.',
+  // },
+  {
+    icon: Moon,
+    title: 'Prioritize Sleep',
+    description: 'Get 7 to 9 hours of quality sleep each night to help your body repair and regulate hormones.',
+  },
+  // {
+  //   icon: Brain,
+  //   title: 'Manage Stress',
+  //   description: 'Take a few minutes daily for deep breathing or mindfulness to keep stress levels in check.',
+  // },
+  {
+    icon: Stethoscope,
+    title: 'Routine Checkups',
+    description: 'Schedule regular screenings and doctor visits to catch potential issues early.',
+  },
+]
 
 export function DashboardPage() {
   const { request } = useAuth()
 
-  const [timeline, setTimeline] = useState<TimelineEntry[]>([])
-  const [medications, setMedications] = useState<string[]>([])
-  const [labTrends, setLabTrends] = useState<LabTrendsResponse | null>(null)
   const [alerts, setAlerts] = useState<AlertItem[]>([])
+  const [latestVitals, setLatestVitals] = useState<VitalsEntry | null>(null)
   const [status, setStatus] = useState('')
   const [isLoading, setIsLoading] = useState(true)
 
   const loadDashboard = useCallback(async () => {
     setIsLoading(true)
     try {
-      const [timelineList, medicationList, trends, alertList] = await Promise.all([
-        getTimeline(request),
-        getMedications(request),
-        getLabTrends(request),
-        getAlerts(request),
-      ])
+      const [alertList, vitalsHistory] = await Promise.all([getAlerts(request), listVitals(request)])
 
-      const sortedTimeline = [...timelineList].sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-      )
-
-      setTimeline(sortedTimeline)
-      setMedications(medicationList)
-      setLabTrends(trends)
       setAlerts(alertList)
+      setLatestVitals(
+        [...vitalsHistory].sort((a, b) => b.recorded_at.localeCompare(a.recorded_at))[0] ?? null,
+      )
       setStatus('')
     } catch (error) {
       if (error instanceof ApiRequestError) {
@@ -79,115 +112,117 @@ export function DashboardPage() {
         <Card className="p-4 text-sm text-gray-700 sm:p-4">{status}</Card>
       ) : null}
 
+      <Card>
+        <div className="mb-5 flex items-center gap-3">
+          {/* <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 text-white shadow-brand">
+            <Activity className="h-5 w-5" />
+          </div> */}
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">Daily Health Tips</h2>
+            <p className="text-sm text-gray-500">Small habits that add up to better health.</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {healthTips.map((tip) => (
+            <div
+              key={tip.title}
+              className="group rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+            >
+              <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl text-primary-600">
+                <tip.icon className="h-6 w-6" />
+              </div>
+              <h3 className="text-sm font-semibold text-gray-900">{tip.title}</h3>
+              <p className="mt-1.5 text-sm leading-relaxed text-gray-600">{tip.description}</p>
+            </div>
+          ))}
+        </div>
+      </Card>
+
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card>
-          <div className="mb-4 flex items-center gap-2">
-            <Clock className="h-4 w-4 text-primary-600" />
-            <h2 className="text-lg font-semibold text-gray-900">Recent Timeline</h2>
-          </div>
-          {isLoading ? (
-            <SkeletonLines count={4} />
-          ) : timeline.length === 0 ? (
-            <EmptyState icon={Clock} title="No timeline entries found." />
-          ) : (
-            <ol className="relative ml-3 border-l-2 border-gray-200">
-              {timeline.slice(0, 5).map((entry, index) => (
-                <li key={`${entry.date}-${index}`} className="mb-6 ml-6 last:mb-0">
-                  <span className="absolute -left-[9px] mt-1.5 h-4 w-4 rounded-full border-2 border-white bg-primary-600 shadow" />
-                  <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <Badge tone="primary">{entry.category}</Badge>
-                      <time className="text-xs font-medium text-gray-500">{formatDate(entry.date)}</time>
-                    </div>
-                    <p className="mt-2 text-sm font-semibold text-gray-900">{entry.name ?? 'Unknown'}</p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          )}
-        </Card>
-
-        <Card>
-          <div className="mb-4 flex items-center gap-2">
-            <Pill className="h-4 w-4 text-primary-600" />
-            <h2 className="text-lg font-semibold text-gray-900">Medications</h2>
-          </div>
-          {isLoading ? (
-            <SkeletonLines count={3} />
-          ) : medications.length === 0 ? (
-            <EmptyState icon={Pill} title="No medications found." />
-          ) : (
-            <ul className="flex flex-col gap-2">
-              {medications.map((medication, index) => (
-                <li
-                  key={`${medication}-${index}`}
-                  className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-900"
-                >
-                  {medication}
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-
-        <Card>
-          <div className="mb-4 flex items-center gap-2">
-            <FlaskConical className="h-4 w-4 text-primary-600" />
-            <h2 className="text-lg font-semibold text-gray-900">Lab Trends</h2>
-          </div>
-          {labTrends?.warning ? (
-            <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              <p>{labTrends.warning.message}</p>
-              {labTrends.warning.recommend_doctor_consult ? (
-                <p className="mt-1 font-semibold">A doctor consultation is recommended.</p>
-              ) : null}
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              {/* <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 text-white shadow-brand">
+                <HeartPulse className="h-5 w-5" />
+              </div> */}
+              <h2 className="text-lg font-semibold text-gray-900">Vitals</h2>
             </div>
-          ) : null}
+            <Link to="/profile" className="text-sm font-medium text-primary-600 hover:text-primary-700">
+              View history &rarr;
+            </Link>
+          </div>
           {isLoading ? (
             <SkeletonLines count={4} />
-          ) : !labTrends || labTrends.trends.length === 0 ? (
-            <EmptyState icon={FlaskConical} title="No lab trends found." />
+          ) : !latestVitals ? (
+            <EmptyState icon={HeartPulse} title="No vitals recorded yet." />
           ) : (
-            <div className="flex flex-col gap-3">
-              {labTrends.trends.map((trend, index) => (
-                <div key={`${trend.test_name}-${index}`} className="rounded-xl border border-gray-200 p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-sm font-semibold text-gray-900">{trend.test_name}</p>
-                    <Badge tone={trendTone(trend.trend_direction)}>{trend.trend_direction}</Badge>
-                  </div>
-                  <p className="mt-1 text-xs text-gray-500">{trend.normal_range_comparison}</p>
-                  <p className="mt-2 text-sm text-gray-700">{trend.explanation}</p>
-                  <p className="mt-2 text-xs font-medium text-gray-500">
-                    Confidence: {Math.round(trend.confidence * 100)}%
+            <div className="rounded-xl border border-gray-200 p-4">
+              <p className="text-xs font-medium text-gray-500">Recorded: {latestVitals.recorded_at}</p>
+              <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                <div>
+                  <p className="text-xs text-gray-500">Height</p>
+                  <p className="text-sm font-semibold text-gray-900">
+                    {latestVitals.height ?? '-'} {latestVitals.height ? 'cm' : ''}
                   </p>
                 </div>
-              ))}
+                <div>
+                  <p className="text-xs text-gray-500">Weight</p>
+                  <p className="text-sm font-semibold text-gray-900">
+                    {latestVitals.weight ?? '-'} {latestVitals.weight ? 'kg' : ''}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Blood Group</p>
+                  <p className="text-sm font-semibold text-gray-900">{latestVitals.blood_group ?? '-'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Pressure</p>
+                  <p className="text-sm font-semibold text-gray-900">{latestVitals.pressure ?? '-'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Blood Sugar</p>
+                  <p className="text-sm font-semibold text-gray-900">{latestVitals.blood_sugar ?? '-'}</p>
+                </div>
+              </div>
             </div>
           )}
         </Card>
 
         <Card>
-          <div className="mb-4 flex items-center gap-2">
-            <Activity className="h-4 w-4 text-primary-600" />
-            <h2 className="text-lg font-semibold text-gray-900">Alerts</h2>
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              {/* <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 text-white shadow-brand">
+                <AlertTriangle className="h-5 w-5" />
+              </div> */}
+              <h2 className="text-lg font-semibold text-gray-900">Alerts</h2>
+            </div>
+            <Link to="/analyze" className="text-sm font-medium text-primary-600 hover:text-primary-700">
+              View analysis &rarr;
+            </Link>
           </div>
           {isLoading ? (
             <SkeletonLines count={3} />
           ) : alerts.length === 0 ? (
-            <EmptyState icon={Activity} title="No alerts found." />
+            <EmptyState icon={AlertTriangle} title="No alerts found." />
           ) : (
             <div className="flex flex-col gap-3">
               {alerts.map((alert, index) => (
                 <div key={`${alert.category}-${index}`} className="rounded-xl border border-gray-200 p-4">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-sm font-semibold text-gray-900">{alert.category}</p>
-                    <Badge tone={riskTone(alert.assessment.risk_level)}>{alert.assessment.risk_level}</Badge>
+                    <p className="text-sm font-semibold text-gray-900">{formatCategory(alert.category)}</p>
+                    {alert.assessment ? (
+                      <Badge tone={riskTone(alert.assessment.risk_level)}>{alert.assessment.risk_level}</Badge>
+                    ) : null}
                   </div>
                   <p className="mt-2 text-sm text-gray-700">{alert.details}</p>
-                  <p className="mt-2 text-sm text-gray-600">{alert.assessment.explanation}</p>
-                  <p className="mt-2 text-xs font-medium text-gray-500">
-                    Confidence: {Math.round(alert.assessment.confidence * 100)}%
-                  </p>
+                  {alert.assessment ? (
+                    <>
+                      <p className="mt-2 text-sm text-gray-600">{alert.assessment.explanation}</p>
+                      <p className="mt-2 text-xs font-medium text-gray-500">
+                        Confidence: {Math.round(alert.assessment.confidence * 100)}%
+                      </p>
+                    </>
+                  ) : null}
                 </div>
               ))}
             </div>

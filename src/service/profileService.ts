@@ -7,12 +7,9 @@ export function getMyProfile(request: AuthRequest) {
 
 export type UpdateProfilePayload = {
   full_name: string
-  age?: number
-  height?: number
-  weight?: number
-  blood_group?: string
-  pressure?: string
-  blood_sugar?: number
+  date_of_birth?: string
+  bio?: string
+  notes?: string
 }
 
 export function updateMyProfile(request: AuthRequest, payload: UpdateProfilePayload) {

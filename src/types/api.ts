@@ -186,7 +186,7 @@ export type AlertItem = {
       snippet: string
       page: number
     }>
-  }
+  } | null
 }
 
 export type ChatResponse = {
@@ -292,12 +292,21 @@ export type UserProfile = {
   id: string
   email: string
   full_name: string
-  age: number | null
+  date_of_birth: string | null
+  bio: string | null
+  notes: string | null
+}
+
+export type VitalsEntry = {
+  id: string
+  recorded_at: string
   height: number | null
   weight: number | null
   blood_group: string | null
   pressure: string | null
   blood_sugar: number | null
+  created_at: string
+  updated_at: string
 }
 
 export type TimelineEntry = {

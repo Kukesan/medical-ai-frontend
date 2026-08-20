@@ -11,9 +11,6 @@ import {
   Menu,
   MessageCircle,
   PlusCircle,
-  Shield,
-  Stethoscope,
-  Syringe,
   User,
   X,
 } from "lucide-react";
@@ -204,9 +201,9 @@ export function AppLayout() {
               >
                 <Menu className="h-5 w-5" />
               </button>
-              <h2 className="font-display text-xl text-gray-900 sm:text-2xl">
-                {pageTitle}
-              </h2>
+              <p className="font-display text-gray-900 h-4">
+                {/* Hi, {user?.full_name || "User"} */}
+              </p>
             </div>
             <div className="flex items-center gap-3">
               {user ? (
