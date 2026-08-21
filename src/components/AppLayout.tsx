@@ -124,7 +124,7 @@ export function AppLayout() {
             <p className="text-xs font-bold uppercase tracking-wider text-primary-600">
               Medical AI
             </p>
-            <p className="text-sm font-semibold text-gray-900">Yarlit Portal</p>
+            {/* <p className="text-sm font-semibold text-gray-900">Clinical Operations Portal</p> */}
           </div>
         </div>
 
@@ -154,9 +154,9 @@ export function AppLayout() {
                   <p className="text-xs font-bold uppercase tracking-wider text-primary-600">
                     Medical AI
                   </p>
-                  <p className="text-sm font-semibold text-gray-900">
+                  {/* <p className="text-sm font-semibold text-gray-900">
                     Yarlit Portal
-                  </p>
+                  </p> */}
                 </div>
               </div>
               <button

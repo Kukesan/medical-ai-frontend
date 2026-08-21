@@ -53,7 +53,7 @@ export function AuthPage() {
           <div className="mb-3 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-600 to-primary-500 shadow-brand">
             <Activity className="h-7 w-7 text-white" strokeWidth={2.5} />
           </div>
-          <h1 className="font-display text-2xl text-gray-900">Yarlit Medical AI</h1>
+          <h1 className="font-display text-2xl text-gray-900">Medical AI</h1>
           <p className="mt-2 text-sm text-gray-600">Clinical Operations Portal</p>
         </div>
 
