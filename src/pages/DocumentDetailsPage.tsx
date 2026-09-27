@@ -120,63 +120,63 @@ export function DocumentDetailsPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-6">
-      <Card>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">{doc?.file_name ?? 'Document Details'}</h1>
-            {documentId ? <p className="mt-1 text-xs text-gray-500">ID: {documentId}</p> : null}
-          </div>
-          <Link to="/document" className={buttonClassName('secondary', 'md', 'inline-flex items-center gap-2')}>
-            <ArrowLeft className="h-4 w-4" />
-            Back to Documents
-          </Link>
+      <div className="flex flex-col items-start gap-3">
+        <Link to="/document" className={buttonClassName('ghost', 'sm', '-ml-2')}>
+          <ArrowLeft className="h-4 w-4" />
+          Back to Documents
+        </Link>
+        <div className="min-w-0">
+          <h1 className="break-words text-2xl font-bold tracking-tight text-gray-900">
+            {doc?.file_name ?? 'Document Details'}
+          </h1>
+          {documentId ? <p className="mt-1 font-mono text-xs text-gray-400">ID: {documentId}</p> : null}
         </div>
+      </div>
 
+      <Card>
         {isLoading ? <LoadingRow label="Loading document details..." /> : null}
         {status ? (
-          <Alert tone={inferStatusTone(status)} className="mt-5">
+          <Alert tone={inferStatusTone(status)} className={isLoading || doc ? 'mb-5' : undefined}>
             {status}
           </Alert>
         ) : null}
 
         {!isLoading && doc ? (
-          <table className="mt-5 w-full text-sm">
-            <tbody>
-              <tr className="border-b border-gray-100">
-                <th className="w-40 py-2 pr-4 text-left font-medium text-gray-500">Status</th>
-                <td className="py-2">
-                  <DocumentStatusBadge status={doc.processing_status} />
-                </td>
-              </tr>
-              <tr className="border-b border-gray-100">
-                <th className="py-2 pr-4 text-left font-medium text-gray-500">Document type</th>
-                <td className="py-2 text-gray-900">{doc.document_type}</td>
-              </tr>
-              <tr className="border-b border-gray-100">
-                <th className="py-2 pr-4 text-left font-medium text-gray-500">Uploaded</th>
-                <td className="py-2 text-gray-900">{formatDateTime(doc.created_at)}</td>
-              </tr>
-              <tr className="border-b border-gray-100">
-                <th className="py-2 pr-4 text-left font-medium text-gray-500">Visit date</th>
-                <td className="py-2 text-gray-900">{doc.visit_date ?? '—'}</td>
-              </tr>
-              <tr className="border-b border-gray-100">
-                <th className="py-2 pr-4 text-left font-medium text-gray-500">Doctor</th>
-                <td className="py-2 text-gray-900">{doc.doctor_name ?? '—'}</td>
-              </tr>
-              <tr>
-                <th className="py-2 pr-4 text-left font-medium text-gray-500">Hospital</th>
-                <td className="py-2 text-gray-900">{doc.hospital_name ?? '—'}</td>
-              </tr>
-            </tbody>
-          </table>
+          <dl className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div>
+              <dt className="text-xs font-medium text-gray-500">Status</dt>
+              <dd className="mt-1">
+                <DocumentStatusBadge status={doc.processing_status} />
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs font-medium text-gray-500">Document type</dt>
+              <dd className="mt-1 text-sm text-gray-900">{doc.document_type}</dd>
+            </div>
+            <div>
+              <dt className="text-xs font-medium text-gray-500">Uploaded</dt>
+              <dd className="mt-1 text-sm text-gray-900">{formatDateTime(doc.created_at)}</dd>
+            </div>
+            <div>
+              <dt className="text-xs font-medium text-gray-500">Visit date</dt>
+              <dd className="mt-1 text-sm text-gray-900">{doc.visit_date ?? '—'}</dd>
+            </div>
+            <div>
+              <dt className="text-xs font-medium text-gray-500">Doctor</dt>
+              <dd className="mt-1 text-sm text-gray-900">{doc.doctor_name ?? '—'}</dd>
+            </div>
+            <div>
+              <dt className="text-xs font-medium text-gray-500">Hospital</dt>
+              <dd className="mt-1 text-sm text-gray-900">{doc.hospital_name ?? '—'}</dd>
+            </div>
+          </dl>
         ) : null}
       </Card>
 
       {!isLoading && doc ? (
         <Card>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-lg font-semibold text-gray-900">Extracted Data</h2>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 pb-4">
+            <h2 className="text-base font-semibold text-gray-900">Extracted Data</h2>
 
             {!isEditing ? (
               <div className="flex flex-wrap gap-2">
@@ -213,7 +213,7 @@ export function DocumentDetailsPage() {
             <p className="mt-3 text-sm text-gray-500">Extraction has not completed yet — data will appear here once processing finishes.</p>
           ) : null}
 
-          <div className="mt-4">
+          <div className="mt-5">
             {isEditing ? (
               <ExtractionEditor data={editValue} editable onChange={setEditValue} />
             ) : (

@@ -6,7 +6,7 @@ export function Spinner({ className }: { className?: string }) {
 }
 
 export function Skeleton({ className }: { className?: string }) {
-  return <div className={cn('animate-pulse rounded-md bg-gray-200/70', className)} />
+  return <div className={cn('animate-pulse rounded-md bg-gray-100', className)} />
 }
 
 export function SkeletonLines({ count = 3, className }: { count?: number; className?: string }) {
@@ -21,7 +21,7 @@ export function SkeletonLines({ count = 3, className }: { count?: number; classN
 
 export function LoadingRow({ label }: { label: string }) {
   return (
-    <div className="flex items-center gap-2 text-sm text-gray-500">
+    <div className="flex items-center gap-2 py-2 text-sm text-gray-500">
       <Spinner />
       {label}
     </div>

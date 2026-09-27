@@ -106,24 +106,28 @@ export function AnalysisResultDetailsPage() {
 
   return (
     <div className="mx-auto flex max-w-3xl flex-1 flex-col gap-6">
-      <div className="flex items-center gap-3">
-        <Button variant="secondary" onClick={() => navigate('/analyze')}>
+      <div className="flex flex-col items-start gap-3">
+        <Button variant="ghost" size="sm" className="-ml-2" onClick={() => navigate('/analyze')}>
           <ArrowLeft className="h-4 w-4" />
           Back
         </Button>
-        <h1 className="font-display text-2xl text-gray-900">Analysis Detail</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900">Analysis Detail</h1>
       </div>
 
-      {isLoading ? <LoadingRow label="Loading analysis result..." /> : null}
+      {isLoading ? (
+        <Card>
+          <LoadingRow label="Loading analysis result..." />
+        </Card>
+      ) : null}
       {!isLoading && status ? <Alert tone="danger">{status}</Alert> : null}
 
       {!isLoading && result ? (
-        <Card className="space-y-5">
-          <div className="flex flex-wrap items-start justify-between gap-2">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">{result.title}</h2>
-              <p className="mt-1 text-sm text-gray-600">
-                {formatCategory(result.category)} • Created {formatDate(result.created_at)}
+        <Card className="space-y-6">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="text-xl font-semibold text-gray-900">{result.title}</h2>
+              <p className="mt-1 text-sm text-gray-500">
+                {formatCategory(result.category)} · Created {formatDate(result.created_at)}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -139,33 +143,35 @@ export function AnalysisResultDetailsPage() {
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <p className="text-sm text-gray-700">
-              <span className="font-semibold text-gray-900">Confidence:</span> {Math.round(result.confidence * 100)}%
-            </p>
-            <p className="text-sm text-gray-700">
-              <span className="font-semibold text-gray-900">Recommendation:</span> {result.recommendation}
-            </p>
-          </div>
+          <dl className="grid gap-3 sm:grid-cols-[10rem_1fr]">
+            <div className="rounded-lg bg-gray-50 px-4 py-3">
+              <dt className="text-xs font-medium text-gray-500">Confidence</dt>
+              <dd className="mt-0.5 text-lg font-semibold text-gray-900">{Math.round(result.confidence * 100)}%</dd>
+            </div>
+            <div className="rounded-lg bg-gray-50 px-4 py-3">
+              <dt className="text-xs font-medium text-gray-500">Recommendation</dt>
+              <dd className="mt-0.5 text-sm leading-6 text-gray-800">{result.recommendation}</dd>
+            </div>
+          </dl>
 
-          <section>
-            <h3 className="text-base font-semibold text-gray-900">Description</h3>
-            <p className="mt-2 text-sm leading-6 text-gray-700">{result.description}</p>
+          <section className="border-t border-gray-100 pt-5">
+            <h3 className="text-sm font-semibold text-gray-900">Description</h3>
+            <p className="mt-1.5 text-sm leading-6 text-gray-600">{result.description}</p>
           </section>
 
-          <section>
-            <h3 className="text-base font-semibold text-gray-900">Clinical Reason</h3>
-            <p className="mt-2 text-sm leading-6 text-gray-700">{result.clinical_reason}</p>
+          <section className="border-t border-gray-100 pt-5">
+            <h3 className="text-sm font-semibold text-gray-900">Clinical Reason</h3>
+            <p className="mt-1.5 text-sm leading-6 text-gray-600">{result.clinical_reason}</p>
           </section>
 
-          <section>
-            <h3 className="text-base font-semibold text-gray-900">Timeline</h3>
+          <section className="border-t border-gray-100 pt-5">
+            <h3 className="text-sm font-semibold text-gray-900">Timeline</h3>
             {result.timeline.length === 0 ? (
-              <p className="mt-2 text-sm text-gray-600">No timeline entries.</p>
+              <p className="mt-1.5 text-sm text-gray-500">No timeline entries.</p>
             ) : (
               <div className="mt-2 space-y-2">
                 {result.timeline.map((item, index) => (
-                  <div key={`${item.document_id}-${item.date}-${index}`} className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                  <div key={`${item.document_id}-${item.date}-${index}`} className="rounded-lg border border-gray-100 bg-gray-50/60 p-3">
                     <p className="text-xs text-gray-500">{formatDate(item.date)}</p>
                     <p className="mt-1 text-sm text-gray-700">{item.finding}</p>
                     <p className="mt-2 text-xs text-gray-500">Document: {item.document_id}</p>
@@ -175,14 +181,14 @@ export function AnalysisResultDetailsPage() {
             )}
           </section>
 
-          <section>
-            <h3 className="text-base font-semibold text-gray-900">Evidence</h3>
+          <section className="border-t border-gray-100 pt-5">
+            <h3 className="text-sm font-semibold text-gray-900">Evidence</h3>
             {result.evidence.length === 0 ? (
-              <p className="mt-2 text-sm text-gray-600">No evidence snippets.</p>
+              <p className="mt-1.5 text-sm text-gray-500">No evidence snippets.</p>
             ) : (
               <div className="mt-2 space-y-2">
                 {result.evidence.map((item, index) => (
-                  <div key={`${item.document_id}-${index}`} className="rounded-lg border border-gray-200 bg-white p-3">
+                  <div key={`${item.document_id}-${index}`} className="rounded-lg border-l-2 border-gray-200 bg-gray-50/60 py-2 pl-3 pr-3">
                     <p className="text-sm text-gray-700">{item.snippet}</p>
                     <p className="mt-2 text-xs text-gray-500">Document: {item.document_id}</p>
                   </div>
@@ -196,8 +202,8 @@ export function AnalysisResultDetailsPage() {
       {!isLoading && result && needsDoctorRecommendation ? (
         <Card id="doctor-recommendation" className="space-y-4">
           <div>
-            <h2 className="text-lg font-bold text-gray-900">Find a Nearby Doctor</h2>
-            <p className="mt-1 text-sm text-gray-600">
+            <h2 className="text-base font-semibold text-gray-900">Find a Nearby Doctor</h2>
+            <p className="mt-1 text-sm leading-relaxed text-gray-500">
               This finding is high-risk or low-confidence. Tell us where you are and when you're free, and we'll
               look for real doctors and clinics nearby.
             </p>
@@ -239,10 +245,10 @@ export function AnalysisResultDetailsPage() {
           {!doctorStatus && doctors && doctors.length > 0 ? (
             <div className="space-y-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                {doctorSpecialty} near you • Preferred availability: {availability}
+                {doctorSpecialty} near you · Preferred availability: {availability}
               </p>
               {doctors.map((doctor, index) => (
-                <div key={`${doctor.name}-${index}`} className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                <div key={`${doctor.name}-${index}`} className="rounded-lg border border-gray-200/80 p-4">
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <p className="font-semibold text-gray-900">{doctor.name}</p>
                     <Badge tone="neutral">{doctor.specialty}</Badge>

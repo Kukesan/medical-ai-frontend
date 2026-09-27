@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
-import { Trash2, UploadCloud } from 'lucide-react'
+import { FileText, Trash2, UploadCloud, X } from 'lucide-react'
 import { ApiRequestError } from '../lib/ApiRequestError'
 import { useAuth } from '../context/useAuth'
 import { deleteDocument, listDocuments, uploadDocumentsViaS3 } from '../service/documentService'
@@ -8,12 +8,14 @@ import type { DocumentItem, UploadResult } from '../types/api'
 import { useNavigate } from 'react-router-dom'
 import {
   Alert,
+  Badge,
   Button,
   Card,
   ConfirmDialog,
   DocumentStatusBadge,
   EmptyState,
   PageHeader,
+  SkeletonLines,
   Table,
   Tbody,
   Td,
@@ -189,10 +191,12 @@ export function DocumentPage() {
         <form className="flex flex-col gap-4" onSubmit={onUpload}>
           <label
             htmlFor="document-files"
-            className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-gray-300 bg-gray-50/60 px-6 py-10 text-center transition hover:border-primary-300 hover:bg-primary-50/40"
+            className="flex cursor-pointer flex-col items-center gap-1.5 rounded-lg border border-dashed border-gray-300 bg-gray-50/50 px-6 py-10 text-center transition-colors hover:border-primary-400 hover:bg-primary-50/40 focus-within:border-primary-500 focus-within:ring-4 focus-within:ring-primary-500/10"
           >
-            <UploadCloud className="h-8 w-8 text-primary-500" />
-            <span className="text-sm font-semibold text-gray-700">Click to choose files, or drag them here</span>
+            <span className="mb-1 flex h-10 w-10 items-center justify-center rounded-lg bg-white text-primary-600 shadow-card ring-1 ring-gray-200/80">
+              <UploadCloud className="h-5 w-5" />
+            </span>
+            <span className="text-sm font-semibold text-gray-800">Click to choose files, or drag them here</span>
             <span className="text-xs text-gray-500">Up to {MAX_FILES} files at once</span>
             <input
               ref={fileInputRef}
@@ -210,17 +214,18 @@ export function DocumentPage() {
               {selectedFiles.map((file, index) => (
                 <span
                   key={`${file.name}-${index}`}
-                  className="inline-flex items-center gap-1 rounded-full bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700"
+                  className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-gray-200 bg-white py-1 pl-2.5 pr-1 text-xs font-medium text-gray-700"
                 >
-                  {file.name}
-                  <span className="text-primary-400">({formatBytes(file.size)})</span>
+                  <FileText className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+                  <span className="truncate">{file.name}</span>
+                  <span className="shrink-0 text-gray-400">{formatBytes(file.size)}</span>
                   <button
                     type="button"
                     onClick={() => removeSelectedFile(index)}
-                    className="ml-1 text-primary-400 hover:text-primary-700"
+                    className="rounded p-0.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
                     aria-label={`Remove ${file.name}`}
                   >
-                    &times;
+                    <X className="h-3.5 w-3.5" />
                   </button>
                 </span>
               ))}
@@ -244,16 +249,18 @@ export function DocumentPage() {
         ) : null}
 
         {uploadResult && uploadResult.uploaded.length > 0 ? (
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
-            <span>Please wait while your documents finish uploading and processing before analyzing them.</span>
-            <Button size="sm" onClick={() => void navigate('/analyze')}>
-              Go to Analyze
-            </Button>
-          </div>
+          <Alert tone="success" className="mt-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <span>Please wait while your documents finish uploading and processing before analyzing them.</span>
+              <Button size="sm" onClick={() => void navigate('/analyze')}>
+                Go to Analyze
+              </Button>
+            </div>
+          </Alert>
         ) : null}
 
         {uploadResult && uploadResult.failed.length > 0 ? (
-          <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+          <Alert tone="warning" className="mt-4">
             <p className="font-semibold">Some files failed to upload:</p>
             <ul className="mt-1 list-inside list-disc">
               {uploadResult.failed.map((item) => (
@@ -262,18 +269,18 @@ export function DocumentPage() {
                 </li>
               ))}
             </ul>
-          </div>
+          </Alert>
         ) : null}
       </Card>
 
       <Card>
         <div className="mb-4 flex items-center justify-between gap-2">
-          <h2 className="text-lg font-semibold text-gray-900">Uploaded Documents</h2>
-          <p className="text-sm text-gray-600">{documents.length} total</p>
+          <h2 className="text-base font-semibold text-gray-900">Uploaded Documents</h2>
+          <Badge tone="neutral">{documents.length} total</Badge>
         </div>
 
         {isLoadingDocuments ? (
-          <p className="text-sm text-gray-600">Loading documents...</p>
+          <SkeletonLines count={4} />
         ) : documents.length === 0 ? (
           <EmptyState title="No documents uploaded yet." description="Upload a file above to get started." />
         ) : (
@@ -285,7 +292,7 @@ export function DocumentPage() {
                 <Th>Size</Th>
                 <Th>Status</Th>
                 <Th>Created</Th>
-                <Th>Actions</Th>
+                <Th className="text-right">Actions</Th>
               </Tr>
             </Thead>
             <Tbody>
@@ -295,26 +302,22 @@ export function DocumentPage() {
                     <button
                       type="button"
                       onClick={() => void navigate(`/document/${doc.id}`)}
-                      className="text-left font-medium text-primary-700 underline-offset-2 hover:underline"
+                      className="text-left font-medium text-gray-900 underline-offset-2 transition-colors hover:text-primary-700 hover:underline"
                     >
                       {doc.file_name}
                     </button>
                   </Td>
-                  <Td>{doc.document_type}</Td>
-                  <Td>{formatBytes(doc.file_size)}</Td>
+                  <Td className="text-gray-500">{doc.document_type}</Td>
+                  <Td className="whitespace-nowrap text-gray-500">{formatBytes(doc.file_size)}</Td>
                   <Td>
                     <DocumentStatusBadge status={doc.processing_status} />
                   </Td>
-                  <Td>{formatDate(doc.created_at)}</Td>
-                  <Td>
-                    <button
-                      type="button"
-                      onClick={() => setPendingDeleteDocument(doc)}
-                      className="inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-gray-600 transition hover:border-red-300 hover:bg-red-50 hover:text-red-700"
-                    >
+                  <Td className="whitespace-nowrap text-gray-500">{formatDate(doc.created_at)}</Td>
+                  <Td className="text-right">
+                    <Button variant="danger" size="sm" onClick={() => setPendingDeleteDocument(doc)}>
                       <Trash2 className="h-3.5 w-3.5" />
                       Delete
-                    </button>
+                    </Button>
                   </Td>
                 </Tr>
               ))}

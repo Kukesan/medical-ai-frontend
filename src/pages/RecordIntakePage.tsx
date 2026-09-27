@@ -46,11 +46,11 @@ function DataSummary({ data }: { data: Record<string, unknown> }) {
   }
 
   return (
-    <dl className="grid gap-2 sm:grid-cols-2">
+    <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
       {entries.map(([key, value]) => (
-        <div key={key}>
-          <dt className="text-xs font-semibold uppercase tracking-wide text-gray-400">{formatLabel(key)}</dt>
-          <dd className="text-sm text-gray-800">{formatValue(value)}</dd>
+        <div key={key} className="min-w-0">
+          <dt className="text-xs font-medium text-gray-500">{formatLabel(key)}</dt>
+          <dd className="mt-0.5 break-words text-sm text-gray-900">{formatValue(value)}</dd>
         </div>
       ))}
     </dl>
@@ -141,13 +141,13 @@ export function RecordIntakePage() {
       {status ? <Alert tone={inferStatusTone(status)}>{status}</Alert> : null}
 
       {isResuming ? (
-        <Card className="flex items-center gap-2 text-sm text-gray-500">
+        <Card className="flex items-center gap-2 py-4 text-sm text-gray-500 sm:py-4">
           <Spinner />
           Resuming your in-progress record...
         </Card>
       ) : result ? (
-        <Card className="flex flex-col gap-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
+        <Card className="flex flex-col gap-5">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 pb-4">
             <div className="flex items-center gap-2">
               <span className="text-base font-semibold text-gray-900">{formatLabel(result.record_type)}</span>
               <RecordStatusBadge status={result.status} />
@@ -157,20 +157,20 @@ export function RecordIntakePage() {
           <DataSummary data={result.data} />
 
           {isConflict ? (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+            <div className="rounded-lg border border-amber-100 bg-amber-50/70 p-4">
               <p className="text-sm font-semibold text-amber-800">
                 This conflicts with a previously verified record. Choose which version to keep.
               </p>
               <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Existing (verified)</p>
-                  <div className="mt-1">
+                <div className="rounded-lg bg-white p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Existing (verified)</p>
+                  <div className="mt-2">
                     {conflictRecord ? <DataSummary data={conflictRecord.data} /> : <p className="text-sm text-gray-400">Loading...</p>}
                   </div>
                 </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Incoming (new)</p>
-                  <div className="mt-1">
+                <div className="rounded-lg bg-white p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Incoming (new)</p>
+                  <div className="mt-2">
                     <DataSummary data={result.data} />
                   </div>
                 </div>
@@ -231,7 +231,7 @@ export function RecordIntakePage() {
         </Card>
       ) : session.status === 'awaiting_clarification' ? (
         <Card className="flex flex-col gap-4">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 border-b border-gray-100 pb-4">
             <MessageCircleQuestion className="h-5 w-5 text-primary-600" />
             <span className="text-sm font-semibold text-gray-900">
               {session.record_type_name ?? 'Classifying your record'}
@@ -242,8 +242,8 @@ export function RecordIntakePage() {
           {transcript.length > 0 ? (
             <div className="flex flex-col gap-3">
               {transcript.map((entry, index) => (
-                <div key={index} className="rounded-lg bg-gray-50 p-3 text-sm">
-                  <p className="font-medium text-gray-700">{entry.question}</p>
+                <div key={index} className="rounded-lg border border-gray-100 bg-gray-50/60 px-4 py-3 text-sm">
+                  <p className="font-medium text-gray-900">{entry.question}</p>
                   <p className="mt-1 text-gray-600">{entry.answer}</p>
                 </div>
               ))}
@@ -274,13 +274,15 @@ export function RecordIntakePage() {
       ) : (
         <Card>
           <form onSubmit={onSubmitDraft} className="flex flex-col gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-gray-900">
-                {session.record_type_name ?? 'Review your record'}
-              </span>
-              {session.is_new_record_type ? <Badge tone="primary">New type</Badge> : null}
+            <div className="border-b border-gray-100 pb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-base font-semibold text-gray-900">
+                  {session.record_type_name ?? 'Review your record'}
+                </span>
+                {session.is_new_record_type ? <Badge tone="primary">New type</Badge> : null}
+              </div>
+              <p className="mt-1 text-sm text-gray-500">Review the details below and edit anything that isn't right.</p>
             </div>
-            <p className="text-sm text-gray-500">Review the details below and edit anything that isn't right.</p>
 
             <div className="grid gap-4 sm:grid-cols-2">
               {Object.keys(editValues).map((key) => (

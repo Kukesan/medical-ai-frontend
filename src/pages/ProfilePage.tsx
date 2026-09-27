@@ -229,7 +229,7 @@ export function ProfilePage() {
         ) : (
           <form onSubmit={onSave} className="space-y-8">
             <div>
-              <h2 className="mb-4 text-sm font-bold uppercase tracking-wide text-gray-400">Identity</h2>
+              <h2 className="mb-4 text-base font-semibold text-gray-900">Identity</h2>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Field label="Email" htmlFor="profile-email">
                   <Input id="profile-email" type="email" value={profile?.email ?? ''} disabled />
@@ -255,8 +255,8 @@ export function ProfilePage() {
               </div>
             </div>
 
-            <div>
-              <h2 className="mb-4 text-sm font-bold uppercase tracking-wide text-gray-400">About</h2>
+            <div className="border-t border-gray-100 pt-6">
+              <h2 className="mb-4 text-base font-semibold text-gray-900">About</h2>
               <div className="grid grid-cols-1 gap-4">
                 <Field label="Bio" htmlFor="profile-bio">
                   <Textarea
@@ -279,9 +279,11 @@ export function ProfilePage() {
               </div>
             </div>
 
-            <Button type="submit" isLoading={isSaving}>
-              {isSaving ? 'Saving...' : 'Save Changes'}
-            </Button>
+            <div className="flex justify-end border-t border-gray-100 pt-5">
+              <Button type="submit" isLoading={isSaving}>
+                {isSaving ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
           </form>
         )}
 
@@ -293,9 +295,12 @@ export function ProfilePage() {
       </Card>
 
       <Card>
-        <h2 className="mb-4 text-sm font-bold uppercase tracking-wide text-gray-400">Vitals History</h2>
+        <h2 className="mb-4 text-base font-semibold text-gray-900">Vitals History</h2>
 
-        <form onSubmit={onAddVitals} className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+        <form
+          onSubmit={onAddVitals}
+          className="grid grid-cols-1 gap-4 rounded-lg border border-gray-100 bg-gray-50/60 p-4 sm:grid-cols-3 xl:grid-cols-6"
+        >
           <Field label="Date" htmlFor="vitals-recorded-at" required>
             <Input
               id="vitals-recorded-at"
@@ -355,7 +360,7 @@ export function ProfilePage() {
               onChange={(event) => setVitalsForm((prev) => ({ ...prev, blood_sugar: event.target.value }))}
             />
           </Field>
-          <div className="sm:col-span-3 lg:col-span-6">
+          <div className="sm:col-span-3 xl:col-span-6">
             <Button type="submit" isLoading={isAddingVitals}>
               {isAddingVitals ? 'Adding...' : 'Add Entry'}
             </Button>
@@ -389,13 +394,13 @@ export function ProfilePage() {
               <Tbody>
                 {vitalsHistory.map((entry) => (
                   <Tr key={entry.id}>
-                    <Td>{entry.recorded_at}</Td>
+                    <Td className="whitespace-nowrap font-medium text-gray-900">{entry.recorded_at}</Td>
                     <Td>{entry.height ?? '-'}</Td>
                     <Td>{entry.weight ?? '-'}</Td>
                     <Td>{entry.blood_group ?? '-'}</Td>
                     <Td>{entry.pressure ?? '-'}</Td>
                     <Td>{entry.blood_sugar ?? '-'}</Td>
-                    <Td>
+                    <Td className="text-right">
                       <Button variant="danger" size="sm" onClick={() => setPendingDeleteId(entry.id)}>
                         Delete
                       </Button>

@@ -28,24 +28,24 @@ export function ConfirmDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 px-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/30 px-4 backdrop-blur-[2px]"
       role="dialog"
       aria-modal="true"
       aria-labelledby="confirm-dialog-title"
       onClick={onCancel}
     >
       <div
-        className="w-full max-w-sm animate-fade-in rounded-2xl bg-white p-6 shadow-2xl"
+        className="w-full max-w-sm animate-fade-in rounded-xl bg-white p-6 shadow-pop"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-red-50 text-red-600">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-50 text-red-600">
           <AlertTriangle className="h-5 w-5" />
         </div>
-        <h2 id="confirm-dialog-title" className="mt-4 text-lg font-semibold text-gray-900">
+        <h2 id="confirm-dialog-title" className="mt-4 text-base font-semibold text-gray-900">
           {title}
         </h2>
-        {description ? <p className="mt-1.5 text-sm text-gray-600">{description}</p> : null}
-        <div className="mt-6 flex justify-end gap-3">
+        {description ? <p className="mt-1.5 text-sm leading-relaxed text-gray-500">{description}</p> : null}
+        <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button variant="secondary" onClick={onCancel} disabled={isLoading}>
             {cancelLabel}
           </Button>

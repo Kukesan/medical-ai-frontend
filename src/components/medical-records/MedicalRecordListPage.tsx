@@ -124,7 +124,7 @@ export function MedicalRecordListPage({
         }
       />
 
-      <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6">
+      <div className="rounded-xl border border-gray-200/80 bg-white p-5 shadow-card sm:p-6">
         {status ? (
           <Alert tone={inferStatusTone(status)} className="mb-4">
             {status}

@@ -51,7 +51,7 @@ export function ConflictPanel({ record, fields, isBusy, onResolve }: ConflictPan
   }, [record.conflict_with_record_id, request])
 
   return (
-    <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+    <div className="rounded-lg border border-amber-100 bg-amber-50/70 p-4">
       <p className="text-sm font-semibold text-amber-800">
         This extraction conflicts with a previously verified record. Choose which version to keep.
       </p>

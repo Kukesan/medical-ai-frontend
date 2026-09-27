@@ -139,8 +139,8 @@ export function AnalyzePage() {
         ) : null}
 
         <div className="grid grid-cols-2 gap-3">
-          <div className="flex items-center gap-3 rounded-xl border border-red-100 bg-red-50/60 p-3">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-red-600 ring-1 ring-inset ring-red-100">
+          <div className="flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50/60 p-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-50 text-red-600">
               <ShieldAlert className="h-4.5 w-4.5" />
             </span>
             <div>
@@ -148,8 +148,8 @@ export function AnalyzePage() {
               <p className="mt-1 text-xs font-medium text-gray-500">Important</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 p-3">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-gray-600 ring-1 ring-inset ring-gray-200">
+          <div className="flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50/60 p-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-600">
               <Layers className="h-4.5 w-4.5" />
             </span>
             <div>
@@ -173,7 +173,7 @@ export function AnalyzePage() {
             className="mt-4"
           />
         ) : (
-          <div className="mt-4 space-y-3">
+          <div className="mt-4 space-y-2.5">
             {prioritizedResults.map((result) => (
               <div
                 key={result.id}
@@ -186,20 +186,20 @@ export function AnalyzePage() {
                     navigate(`/analyze/${result.id}`)
                   }
                 }}
-                className="group relative flex w-full cursor-pointer items-start gap-3 overflow-hidden rounded-xl border border-gray-200 bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-md"
+                className="group relative flex w-full cursor-pointer items-start gap-3 overflow-hidden rounded-lg border border-gray-200/80 bg-white p-4 pl-5 text-left transition-colors hover:border-gray-300 hover:bg-gray-50/50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-500/20"
               >
                 <span className={cn('absolute inset-y-0 left-0 w-1', riskAccent[result.risk_level])} />
 
                 <span
                   className={cn(
-                    'flex h-10 w-10 shrink-0 items-center justify-center rounded-full',
+                    'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg',
                     riskIconStyle[result.risk_level],
                   )}
                 >
                   {result.risk_level === 'low' ? (
-                    <Gauge className="h-5 w-5" />
+                    <Gauge className="h-[18px] w-[18px]" />
                   ) : (
-                    <AlertTriangle className="h-5 w-5" />
+                    <AlertTriangle className="h-[18px] w-[18px]" />
                   )}
                 </span>
 
@@ -224,7 +224,7 @@ export function AnalyzePage() {
                     </div>
                   </div>
 
-                  <div className="mt-1 mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
+                  <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
                     <span className="font-medium text-gray-600">{formatCategory(result.category)}</span>
                     <span className="inline-flex items-center gap-1">
                       <Gauge className="h-3.5 w-3.5" />
@@ -236,10 +236,10 @@ export function AnalyzePage() {
                     </span>
                   </div>
 
-                  <p className="mt-2 line-clamp-2 text-sm text-gray-700">{result.description}</p>
+                  <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-gray-600">{result.description}</p>
                 </div>
 
-                <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-gray-300 transition group-hover:translate-x-0.5 group-hover:text-primary-400" />
+                <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-gray-300 transition-colors group-hover:text-gray-500" />
               </div>
             ))}
           </div>

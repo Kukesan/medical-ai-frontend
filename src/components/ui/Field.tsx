@@ -13,7 +13,7 @@ type FieldProps = {
 export function Field({ label, htmlFor, required, hint, className, children }: FieldProps) {
   return (
     <div className={cn('flex flex-col gap-1.5', className)}>
-      <label htmlFor={htmlFor} className="text-sm font-semibold text-gray-700">
+      <label htmlFor={htmlFor} className="text-sm font-medium text-gray-700">
         {label}
         {required ? <span className="ml-0.5 text-primary-600">*</span> : null}
       </label>

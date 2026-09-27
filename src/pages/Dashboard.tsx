@@ -13,7 +13,17 @@ import { useAuth } from '../context/useAuth'
 import { getAlerts } from '../service/dashboardService'
 import { listVitals } from '../service/vitalsService'
 import type { AlertItem, VitalsEntry } from '../types/api'
-import { Badge, Button, Card, EmptyState, PageHeader, SkeletonLines, riskTone } from '../components/ui'
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  PageHeader,
+  SkeletonLines,
+  inferStatusTone,
+  riskTone,
+} from '../components/ui'
 
 type HealthTip = {
   icon: LucideIcon
@@ -101,9 +111,7 @@ export function DashboardPage() {
         }
       />
 
-      {status ? (
-        <Card className="p-4 text-sm text-gray-700 sm:p-4">{status}</Card>
-      ) : null}
+      {status ? <Alert tone={inferStatusTone(status)}>{status}</Alert> : null}
 
       <Card>
         <div className="mb-5 flex items-center gap-3">
@@ -111,21 +119,18 @@ export function DashboardPage() {
             <Activity className="h-5 w-5" />
           </div> */}
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">Daily Health Tips</h2>
-            <p className="text-sm text-gray-500">Small habits that add up to better health.</p>
+            <h2 className="text-base font-semibold text-gray-900">Daily Health Tips</h2>
+            <p className="mt-0.5 text-sm text-gray-500">Small habits that add up to better health.</p>
           </div>
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {healthTips.map((tip) => (
-            <div
-              key={tip.title}
-              className="group rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
-            >
-              <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl text-primary-600">
-                <tip.icon className="h-6 w-6" />
+            <div key={tip.title} className="rounded-lg border border-gray-100 bg-gray-50/60 p-4">
+              <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
+                <tip.icon className="h-[18px] w-[18px]" />
               </div>
               <h3 className="text-sm font-semibold text-gray-900">{tip.title}</h3>
-              <p className="mt-1.5 text-sm leading-relaxed text-gray-600">{tip.description}</p>
+              <p className="mt-1 text-sm leading-relaxed text-gray-500">{tip.description}</p>
             </div>
           ))}
         </div>
@@ -138,7 +143,7 @@ export function DashboardPage() {
               {/* <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 text-white shadow-brand">
                 <HeartPulse className="h-5 w-5" />
               </div> */}
-              <h2 className="text-lg font-semibold text-gray-900">Vitals</h2>
+              <h2 className="text-base font-semibold text-gray-900">Vitals</h2>
             </div>
             <Link to="/profile" className="text-sm font-medium text-primary-600 hover:text-primary-700">
               View history &rarr;
@@ -149,34 +154,34 @@ export function DashboardPage() {
           ) : !latestVitals ? (
             <EmptyState icon={HeartPulse} title="No vitals recorded yet." />
           ) : (
-            <div className="rounded-xl border border-gray-200 p-4">
-              <p className="text-xs font-medium text-gray-500">Recorded: {latestVitals.recorded_at}</p>
-              <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                <div>
-                  <p className="text-xs text-gray-500">Height</p>
-                  <p className="text-sm font-semibold text-gray-900">
+            <div>
+              <p className="text-xs text-gray-500">Recorded {latestVitals.recorded_at}</p>
+              <dl className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                <div className="rounded-lg bg-gray-50 px-3 py-2.5">
+                  <dt className="text-xs text-gray-500">Height</dt>
+                  <dd className="mt-0.5 text-sm font-semibold text-gray-900">
                     {latestVitals.height ?? '-'} {latestVitals.height ? 'cm' : ''}
-                  </p>
+                  </dd>
                 </div>
-                <div>
-                  <p className="text-xs text-gray-500">Weight</p>
-                  <p className="text-sm font-semibold text-gray-900">
+                <div className="rounded-lg bg-gray-50 px-3 py-2.5">
+                  <dt className="text-xs text-gray-500">Weight</dt>
+                  <dd className="mt-0.5 text-sm font-semibold text-gray-900">
                     {latestVitals.weight ?? '-'} {latestVitals.weight ? 'kg' : ''}
-                  </p>
+                  </dd>
                 </div>
-                <div>
-                  <p className="text-xs text-gray-500">Blood Group</p>
-                  <p className="text-sm font-semibold text-gray-900">{latestVitals.blood_group ?? '-'}</p>
+                <div className="rounded-lg bg-gray-50 px-3 py-2.5">
+                  <dt className="text-xs text-gray-500">Blood Group</dt>
+                  <dd className="mt-0.5 text-sm font-semibold text-gray-900">{latestVitals.blood_group ?? '-'}</dd>
                 </div>
-                <div>
-                  <p className="text-xs text-gray-500">Pressure</p>
-                  <p className="text-sm font-semibold text-gray-900">{latestVitals.pressure ?? '-'}</p>
+                <div className="rounded-lg bg-gray-50 px-3 py-2.5">
+                  <dt className="text-xs text-gray-500">Pressure</dt>
+                  <dd className="mt-0.5 text-sm font-semibold text-gray-900">{latestVitals.pressure ?? '-'}</dd>
                 </div>
-                <div>
-                  <p className="text-xs text-gray-500">Blood Sugar</p>
-                  <p className="text-sm font-semibold text-gray-900">{latestVitals.blood_sugar ?? '-'}</p>
+                <div className="rounded-lg bg-gray-50 px-3 py-2.5">
+                  <dt className="text-xs text-gray-500">Blood Sugar</dt>
+                  <dd className="mt-0.5 text-sm font-semibold text-gray-900">{latestVitals.blood_sugar ?? '-'}</dd>
                 </div>
-              </div>
+              </dl>
             </div>
           )}
         </Card>
@@ -187,7 +192,7 @@ export function DashboardPage() {
               {/* <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 text-white shadow-brand">
                 <AlertTriangle className="h-5 w-5" />
               </div> */}
-              <h2 className="text-lg font-semibold text-gray-900">Alerts</h2>
+              <h2 className="text-base font-semibold text-gray-900">Alerts</h2>
             </div>
             <Link to="/analyze" className="text-sm font-medium text-primary-600 hover:text-primary-700">
               View analysis &rarr;
@@ -198,9 +203,9 @@ export function DashboardPage() {
           ) : alerts.length === 0 ? (
             <EmptyState icon={AlertTriangle} title="No alerts found." />
           ) : (
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2">
               {alerts.map((alert) => (
-                <div key={alert.id} className="rounded-xl border border-gray-200 p-4">
+                <div key={alert.id} className="rounded-lg border border-gray-100 px-4 py-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="text-sm font-semibold text-gray-900">{alert.title}</p>
                     <Badge tone={riskTone(alert.risk_level)}>{alert.risk_level}</Badge>

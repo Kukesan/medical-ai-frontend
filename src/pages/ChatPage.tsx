@@ -7,7 +7,18 @@ import { askChatQuestion, getChatHistory, getConversations } from '../service/ch
 import { listDocuments } from '../service/documentService'
 import { getAnalysisResults } from '../service/analysisService'
 import type { AnalysisResultListItem, ChatContextType, ConversationSummary, DocumentItem } from '../types/api'
-import { Card, EmptyState, Input, LoadingRow, PageHeader, Select } from '../components/ui'
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  Input,
+  LoadingRow,
+  PageHeader,
+  Select,
+  inferStatusTone,
+} from '../components/ui'
 import { cn } from '../lib/cn'
 
 const CHAT_SESSION_STORAGE_KEY = 'medical_ai_chat_session_v1'
@@ -220,16 +231,12 @@ export function ChatPage() {
 
       <div className="flex flex-1 flex-col gap-4 lg:flex-row">
         <Card padded={false} className="flex flex-col lg:w-72 lg:shrink-0">
-          <div className="flex items-center justify-between gap-2 border-b border-gray-200 p-4">
+          <div className="flex items-center justify-between gap-2 border-b border-gray-100 px-4 py-3">
             <h2 className="text-sm font-semibold text-gray-900">Conversations</h2>
-            <button
-              type="button"
-              onClick={startNewConversation}
-              className="inline-flex items-center gap-1 rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-primary-700"
-            >
+            <Button size="sm" onClick={startNewConversation}>
               <Plus className="h-3.5 w-3.5" />
               New chat
-            </button>
+            </Button>
           </div>
 
           <div className="flex-1 overflow-y-auto p-2" style={{ maxHeight: '60vh' }}>
@@ -247,12 +254,12 @@ export function ChatPage() {
                   type="button"
                   onClick={() => selectConversation(conversation.session_id)}
                   className={cn(
-                    'block w-full rounded-lg px-3 py-2 text-left text-sm transition',
-                    isActive ? 'bg-primary-50 text-primary-700 ring-1 ring-inset ring-primary-200' : 'text-gray-700 hover:bg-gray-100',
+                    'mb-0.5 block w-full rounded-lg px-3 py-2 text-left text-sm transition-colors',
+                    isActive ? 'bg-primary-50 text-primary-700' : 'text-gray-700 hover:bg-gray-50',
                   )}
                 >
                   <p className="truncate font-medium">{conversation.title}</p>
-                  <p className="mt-0.5 text-xs text-gray-500">{formatDate(conversation.updated_at)}</p>
+                  <p className="mt-0.5 text-xs text-gray-400">{formatDate(conversation.updated_at)}</p>
                   {conversation.context_label ? (
                     <p className="mt-0.5 truncate text-xs text-primary-600">{conversation.context_label}</p>
                   ) : null}
@@ -264,7 +271,7 @@ export function ChatPage() {
 
         <Card padded={false} className="flex flex-1 flex-col">
           {sessionId === null ? (
-            <div className="flex flex-col gap-2 border-b border-gray-200 p-4 sm:flex-row sm:items-center sm:gap-3 sm:p-5">
+            <div className="flex flex-col gap-2 border-b border-gray-100 px-4 py-3 sm:flex-row sm:items-center sm:gap-3 sm:px-5">
               <Select
                 value={groundingMode}
                 onChange={(event) => {
@@ -299,12 +306,12 @@ export function ChatPage() {
               ) : null}
             </div>
           ) : activeContextLabel ? (
-            <div className="border-b border-gray-200 px-5 py-2 text-xs font-medium text-primary-700 sm:px-6">
-              Grounded in: {activeContextLabel}
+            <div className="border-b border-gray-100 px-4 py-2.5 sm:px-5">
+              <Badge tone="primary">Grounded in: {activeContextLabel}</Badge>
             </div>
           ) : null}
 
-          <div className="flex-1 space-y-4 overflow-y-auto p-5 sm:p-6" style={{ minHeight: '20rem', maxHeight: '60vh' }}>
+          <div className="flex-1 space-y-3 overflow-y-auto p-4 sm:p-5" style={{ minHeight: '20rem', maxHeight: '60vh' }}>
             {isLoadingHistory ? <LoadingRow label="Loading conversation..." /> : null}
 
             {!isLoadingHistory && messages.length === 0 ? (
@@ -317,12 +324,12 @@ export function ChatPage() {
                 <div key={`${message.created_at}-${index}`} className={cn('flex', isUser ? 'justify-end' : 'justify-start')}>
                   <div
                     className={cn(
-                      'max-w-[80%] rounded-2xl px-4 py-2 text-sm',
-                      isUser ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-900',
+                      'max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed sm:max-w-[75%]',
+                      isUser ? 'rounded-br-md bg-primary-600 text-white' : 'rounded-bl-md bg-gray-100 text-gray-900',
                     )}
                   >
-                    <p className="whitespace-pre-wrap">{message.content}</p>
-                    <div className={cn('mt-1 flex items-center gap-2 text-xs', isUser ? 'text-white/70' : 'text-gray-500')}>
+                    <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                    <div className={cn('mt-1 flex items-center gap-2 text-[11px]', isUser ? 'text-white/70' : 'text-gray-500')}>
                       <span>{formatTime(message.created_at)}</span>
                       {!isUser && message.confidence !== null ? (
                         <span>Confidence: {Math.round(message.confidence * 100)}%</span>
@@ -335,9 +342,13 @@ export function ChatPage() {
             <div ref={bottomRef} />
           </div>
 
-          {status ? <p className="px-5 pb-2 text-sm text-amber-700 sm:px-6">{status}</p> : null}
+          {status ? (
+            <div className="px-4 pb-3 sm:px-5">
+              <Alert tone={inferStatusTone(status) === 'danger' ? 'danger' : 'warning'}>{status}</Alert>
+            </div>
+          ) : null}
 
-          <form onSubmit={onSubmit} className="flex items-center gap-3 border-t border-gray-200 p-4 sm:p-5">
+          <form onSubmit={onSubmit} className="flex items-center gap-2 border-t border-gray-100 p-3 sm:gap-3 sm:p-4">
             <Input
               type="text"
               value={question}
@@ -345,18 +356,18 @@ export function ChatPage() {
               placeholder="Ask about your medical documents..."
               disabled={isSending}
             />
-            <button
+            <Button
               type="submit"
+              aria-label="Send"
               disabled={
                 isSending ||
                 !question.trim() ||
                 (sessionId === null && groundingMode !== 'general' && !groundingId)
               }
-              className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Send className="h-4 w-4" />
-              {isSending ? 'Sending...' : 'Send'}
-            </button>
+              <span className="hidden sm:inline">{isSending ? 'Sending...' : 'Send'}</span>
+            </Button>
           </form>
         </Card>
       </div>

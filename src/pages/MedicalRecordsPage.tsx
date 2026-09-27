@@ -16,6 +16,7 @@ import {
   Field,
   Input,
   Checkbox,
+  LoadingRow,
   PageHeader,
   RecordStatusBadge,
   SkeletonLines,
@@ -126,17 +127,17 @@ function EditRecordModal({ record, onClose, onSaved }: EditRecordModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 px-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/30 px-4 backdrop-blur-[2px]"
       role="dialog"
       aria-modal="true"
       aria-labelledby="edit-record-title"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg animate-fade-in rounded-2xl bg-white p-6 shadow-2xl"
+        className="w-full max-w-lg animate-fade-in rounded-xl bg-white p-6 shadow-pop"
         onClick={(event) => event.stopPropagation()}
       >
-        <h2 id="edit-record-title" className="text-lg font-semibold text-gray-900">
+        <h2 id="edit-record-title" className="text-base font-semibold text-gray-900">
           Edit Record
         </h2>
         {error ? (
@@ -145,7 +146,9 @@ function EditRecordModal({ record, onClose, onSaved }: EditRecordModalProps) {
           </Alert>
         ) : null}
         {isLoading ? (
-          <p className="mt-4 text-sm text-gray-400">Loading latest record...</p>
+          <div className="mt-4">
+            <LoadingRow label="Loading latest record..." />
+          </div>
         ) : (
           <div className="mt-4 flex max-h-96 flex-col gap-4 overflow-y-auto pr-1">
             {Object.entries(values).map(([key, value]) => (
@@ -169,7 +172,7 @@ function EditRecordModal({ record, onClose, onSaved }: EditRecordModalProps) {
             ))}
           </div>
         )}
-        <div className="mt-6 flex justify-end gap-3">
+        <div className="mt-6 flex flex-col-reverse gap-2 border-t border-gray-100 pt-4 sm:flex-row sm:justify-end">
           <Button variant="secondary" onClick={onClose} disabled={isSaving}>
             Cancel
           </Button>
@@ -200,45 +203,37 @@ function RecordCard({
   const isUserInput = !record.document_id
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-gray-50/60 p-4">
+    <div className="rounded-lg border border-gray-200/80 bg-white p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-medium text-gray-500">Recorded {formatDate(record.recorded_at)}</span>
-          {isUserInput ? <Badge tone="primary">User Input</Badge> : null}
-        </div>
-        <div className="flex items-center gap-2">
           <RecordStatusBadge status={record.status} />
+          {isUserInput ? <Badge tone="primary">User Input</Badge> : null}
+          <span className="text-xs text-gray-500">Recorded {formatDate(record.recorded_at)}</span>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
           {canVerify ? (
             <Button size="sm" onClick={() => onVerify(record)} isLoading={isVerifying}>
               Verify
             </Button>
           ) : null}
-          <button
-            type="button"
-            className="inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-gray-600 transition hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700"
-            onClick={() => onEdit(record)}
-          >
+          <Button variant="secondary" size="sm" onClick={() => onEdit(record)}>
             <Pencil className="h-3.5 w-3.5" />
             {record.document_id ? 'View Source' : 'Edit'}
-          </button>
+          </Button>
           {isUserInput ? (
-            <button
-              type="button"
-              className="inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-gray-600 transition hover:border-red-300 hover:bg-red-50 hover:text-red-700"
-              onClick={() => onDelete(record)}
-            >
+            <Button variant="danger" size="sm" onClick={() => onDelete(record)}>
               <Trash2 className="h-3.5 w-3.5" />
               Delete
-            </button>
+            </Button>
           ) : null}
         </div>
       </div>
       {entries.length > 0 ? (
-        <dl className="mt-3 grid gap-2 sm:grid-cols-2">
+        <dl className="mt-4 grid gap-x-6 gap-y-3 border-t border-gray-100 pt-4 sm:grid-cols-2 lg:grid-cols-3">
           {entries.map(([key, value]) => (
-            <div key={key}>
-              <dt className="text-xs font-semibold uppercase tracking-wide text-gray-400">{formatLabel(key)}</dt>
-              <dd className="text-sm text-gray-800">{formatValue(value)}</dd>
+            <div key={key} className="min-w-0">
+              <dt className="text-xs font-medium text-gray-500">{formatLabel(key)}</dt>
+              <dd className="mt-0.5 break-words text-sm text-gray-900">{formatValue(value)}</dd>
             </div>
           ))}
         </dl>
@@ -312,37 +307,34 @@ export function MedicalRecordsPage() {
             title="No medical records found."
             description="Records extracted from uploaded documents will appear here, grouped by type."
             action={
-              <button
-                type="button"
-                className="text-sm font-semibold text-primary-600 hover:text-primary-700"
-                onClick={() => void reload()}
-              >
+              <Button variant="secondary" size="sm" onClick={() => void reload()}>
                 Refresh
-              </button>
+              </Button>
             }
           />
         </Card>
       ) : (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3">
           {groups.map((group) => {
             const isOpen = expanded.has(group.record_type)
             return (
-              <Card key={group.record_type} padded={false}>
+              <Card key={group.record_type} padded={false} className="overflow-hidden">
                 <button
                   type="button"
-                  className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left sm:px-6"
+                  aria-expanded={isOpen}
+                  className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left transition-colors hover:bg-gray-50/60 sm:px-6"
                   onClick={() => toggleGroup(group.record_type)}
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-base font-semibold text-gray-900">{group.record_type_name}</span>
+                    <span className="text-sm font-semibold text-gray-900">{group.record_type_name}</span>
                     <Badge tone="neutral">{group.records.length}</Badge>
                   </div>
                   <ChevronDown
-                    className={cn('h-5 w-5 shrink-0 text-gray-400 transition-transform', isOpen && 'rotate-180')}
+                    className={cn('h-4 w-4 shrink-0 text-gray-400 transition-transform', isOpen && 'rotate-180')}
                   />
                 </button>
                 {isOpen ? (
-                  <div className="flex flex-col gap-3 border-t border-gray-100 px-5 py-4 sm:px-6">
+                  <div className="flex flex-col gap-3 border-t border-gray-100 bg-gray-50/50 px-5 py-4 sm:px-6">
                     {group.records.length === 0 ? (
                       <p className="text-sm text-gray-400">No records in this group.</p>
                     ) : (
