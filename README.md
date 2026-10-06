@@ -1,4 +1,4 @@
-# Medical AI Frontend (React + Vite)
+# Envagai Frontend (React + Vite)
 
 React web application scaffolded with Vite and wired to the backend API documented in [FRONTEND_API_DOCUMENTATION.md](FRONTEND_API_DOCUMENTATION.md).
 

@@ -103,7 +103,7 @@ export function DashboardPage() {
     <div className="flex flex-1 flex-col gap-6">
       <PageHeader
         title="Dashboard"
-        description="Welcome to the Yarlit Medical AI Dashboard!"
+        description="Welcome to the Envagai Dashboard!"
         actions={
           <Button variant="secondary" onClick={() => void loadDashboard()} isLoading={isLoading}>
             {isLoading ? 'Refreshing...' : 'Refresh'}

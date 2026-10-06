@@ -2,7 +2,6 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Activity,
   Brain,
   CheckCircle2,
   ClipboardList,
@@ -16,6 +15,7 @@ import { useAuth } from '../context/useAuth'
 import { useAsyncTask } from '../hooks/useAsyncTask'
 import { Alert, Button, Field, Input, inferStatusTone } from '../components/ui'
 import { cn } from '../lib/cn'
+import { Brand } from '../components/EnvagaiLogo'
 
 type AuthMode = 'login' | 'register'
 
@@ -65,24 +65,6 @@ const steps = [
 ]
 
 const highlights = ['Structured records from your documents', 'Medication interaction checks', 'Answers grounded in your data']
-
-function Brand({ inverted }: { inverted?: boolean }) {
-  return (
-    <div className="flex items-center gap-2.5">
-      <div
-        className={cn(
-          'flex h-9 w-9 items-center justify-center rounded-lg',
-          inverted ? 'bg-white/10 ring-1 ring-inset ring-white/15' : 'bg-primary-600',
-        )}
-      >
-        <Activity className="h-[18px] w-[18px] text-white" strokeWidth={2.5} />
-      </div>
-      <span className={cn('text-xs font-bold uppercase tracking-wider', inverted ? 'text-white' : 'text-primary-600')}>
-        Medical AI
-      </span>
-    </div>
-  )
-}
 
 export function AuthPage() {
   const navigate = useNavigate()
@@ -155,7 +137,7 @@ export function AuthPage() {
             <button
               type="button"
               onClick={() => openAuth('register')}
-              className="h-9 rounded-lg bg-white px-4 text-sm font-semibold text-primary-800 transition-colors hover:bg-primary-50"
+              className="h-9 rounded-lg bg-accent-400 px-4 text-sm font-semibold text-primary-900 transition-colors hover:bg-accent-300"
             >
               Get Started
             </button>
@@ -168,20 +150,20 @@ export function AuthPage() {
         <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
           <div>
             <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-primary-100 ring-1 ring-inset ring-white/15">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary-300" />
+              <span className="h-1.5 w-1.5 rounded-full bg-accent-400" />
               Clinical Operations Portal
             </span>
             <h1 className="mt-5 text-4xl font-bold leading-tight tracking-tight text-white sm:text-5xl">
               Your medical history, organized and understood.
             </h1>
             <p className="mt-5 max-w-lg text-base leading-relaxed text-white/70 sm:text-lg">
-              Bring every document, record and vital into one place. Medical AI turns them into structured data and
+              Bring every document, record and vital into one place. Envagai turns them into structured data and
               clear insights you can act on.
             </p>
             <ul className="mt-8 space-y-3">
               {highlights.map((item) => (
                 <li key={item} className="flex items-center gap-3 text-sm text-white/85">
-                  <CheckCircle2 className="h-5 w-5 shrink-0 text-primary-300" />
+                  <CheckCircle2 className="h-5 w-5 shrink-0 text-accent-400" />
                   {item}
                 </li>
               ))}
@@ -312,7 +294,7 @@ export function AuthPage() {
       <section id="features" className="scroll-mt-16 py-16 sm:py-24">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="mx-auto max-w-2xl text-center">
-            <p className="text-sm font-semibold text-primary-600">Features</p>
+            <p className="text-sm font-semibold text-accent-700">Features</p>
             <h2 className="mt-2 text-3xl font-bold tracking-tight text-gray-900">
               Everything you need to manage your health records
             </h2>
@@ -339,7 +321,7 @@ export function AuthPage() {
       <section id="how-it-works" className="scroll-mt-16 border-t border-gray-200/80 bg-white py-16 sm:py-24">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="mx-auto max-w-2xl text-center">
-            <p className="text-sm font-semibold text-primary-600">How it works</p>
+            <p className="text-sm font-semibold text-accent-700">How it works</p>
             <h2 className="mt-2 text-3xl font-bold tracking-tight text-gray-900">Get started in three steps</h2>
           </div>
 
@@ -371,7 +353,7 @@ export function AuthPage() {
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-8 text-center sm:flex-row sm:px-6 sm:text-left">
           <Brand inverted />
           <p className="text-xs text-white/50">
-            © {new Date().getFullYear()} Medical AI. Not a substitute for professional medical advice.
+            © {new Date().getFullYear()} Envagai. Not a substitute for professional medical advice.
           </p>
         </div>
       </footer>

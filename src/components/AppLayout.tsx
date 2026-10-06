@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import {
-  Activity,
   Brain,
   ClipboardList,
   Clock,
@@ -16,6 +15,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../context/useAuth";
 import { cn } from "../lib/cn";
+import { Brand } from "./EnvagaiLogo";
 
 const navGroups = [
   {
@@ -66,41 +66,12 @@ const navGroups = [
 const logoutButtonClass =
   "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-white/70 transition-colors hover:bg-white/5 hover:text-white";
 
-function Logo({ inverted }: { inverted?: boolean }) {
-  return (
-    <div
-      className={cn(
-        "flex h-9 w-9 items-center justify-center rounded-lg",
-        inverted ? "bg-white/10 ring-1 ring-inset ring-white/15" : "bg-primary-600",
-      )}
-    >
-      <Activity className="h-[18px] w-[18px] text-white" strokeWidth={2.5} />
-    </div>
-  );
-}
-
-function Brand({ inverted }: { inverted?: boolean }) {
-  return (
-    <div className="flex items-center gap-2.5">
-      <Logo inverted={inverted} />
-      <p
-        className={cn(
-          "text-xs font-bold uppercase tracking-wider",
-          inverted ? "text-white" : "text-primary-600",
-        )}
-      >
-        Medical AI
-      </p>
-    </div>
-  );
-}
-
 function NavList({ onNavigate }: { onNavigate?: () => void }) {
   const navClass = ({ isActive }: { isActive: boolean }) =>
     cn(
       "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
       isActive
-        ? "bg-white/10 text-white shadow-[inset_2px_0_0_0_var(--color-primary-300)]"
+        ? "bg-white/10 text-white shadow-[inset_2px_0_0_0_var(--color-accent-400)]"
         : "text-white/70 hover:bg-white/5 hover:text-white",
     );
 
