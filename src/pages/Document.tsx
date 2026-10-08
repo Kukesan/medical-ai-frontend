@@ -51,9 +51,6 @@ function formatBytes(bytes: number) {
 }
 
 const MAX_FILES = 5
-/** Statuses where the backend is still working on the document, so the list should keep refreshing. */
-const PROCESSING_STATUSES = new Set(['uploaded', 'ocr_completed'])
-const POLL_INTERVAL_MS = 5000
 
 function formatDate(value: string) {
   const date = new Date(value)
@@ -82,44 +79,22 @@ export function DocumentPage() {
   const [isDeleting, setIsDeleting] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
 
-  /** `silent` refreshes (background polling) skip the loading skeleton. */
-  const loadDocuments = useCallback(
-    async ({ silent = false }: { silent?: boolean } = {}) => {
-      if (!silent) {
-        setIsLoadingDocuments(true)
-      }
-      try {
-        const list = await listDocuments(request)
-        setDocuments(list)
-        if (!silent) {
-          setStatus('')
-        }
-      } catch (error) {
-        if (!silent) {
-          setStatus(describeError(error, 'Unable to load documents'))
-        }
-      } finally {
-        if (!silent) {
-          setIsLoadingDocuments(false)
-        }
-      }
-    },
-    [request],
-  )
+  const loadDocuments = useCallback(async () => {
+    setIsLoadingDocuments(true)
+    try {
+      const list = await listDocuments(request)
+      setDocuments(list)
+      setStatus('')
+    } catch (error) {
+      setStatus(describeError(error, 'Unable to load documents'))
+    } finally {
+      setIsLoadingDocuments(false)
+    }
+  }, [request])
 
   useEffect(() => {
     void loadDocuments()
   }, [loadDocuments])
-
-  // Keep statuses current while documents are being processed, instead of making the user click Refresh.
-  const hasProcessingDocuments = documents.some((doc) => PROCESSING_STATUSES.has(doc.processing_status))
-  useEffect(() => {
-    if (!hasProcessingDocuments) {
-      return
-    }
-    const timer = window.setInterval(() => void loadDocuments({ silent: true }), POLL_INTERVAL_MS)
-    return () => window.clearInterval(timer)
-  }, [hasProcessingDocuments, loadDocuments])
 
   const addFiles = useCallback(
     (chosen: File[]) => {
@@ -310,7 +285,7 @@ export function DocumentPage() {
           <Alert tone="success" className="mt-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <span>
-                Upload complete. Your documents are being processed; their status below updates automatically. Once
+                Upload complete. Your documents are being processed. Click Refresh List to see their latest status. Once
                 they show Pending Review, open each one to check the extracted details.
               </span>
               <Button size="sm" onClick={() => void navigate('/analyze')}>
