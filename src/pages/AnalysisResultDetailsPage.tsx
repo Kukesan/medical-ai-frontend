@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { ArrowLeft, ExternalLink, MapPin, Phone, Star, Stethoscope } from 'lucide-react'
 import type { AnalysisResultItem, DoctorResult } from '../types/api'
-import { ApiRequestError } from '../lib/ApiRequestError'
+import { describeError } from '../lib/describeError'
 import { useAuth } from '../context/useAuth'
 import { getAnalysisResult } from '../service/analysisService'
 import { searchDoctors } from '../service/doctorRecommendationService'
@@ -53,13 +53,7 @@ export function AnalysisResultDetailsPage() {
       const data = await getAnalysisResult(request, resultId)
       setResult(data)
     } catch (error) {
-      if (error instanceof ApiRequestError) {
-        setStatus(`Error ${error.status}: ${error.message}`)
-      } else if (error instanceof Error) {
-        setStatus(error.message)
-      } else {
-        setStatus('Unable to load analysis result.')
-      }
+      setStatus(describeError(error, 'Unable to load analysis result.'))
     } finally {
       setIsLoading(false)
     }
@@ -89,13 +83,7 @@ export function AnalysisResultDetailsPage() {
       setDoctorMessage(data.message ?? '')
     } catch (error) {
       setDoctors(null)
-      if (error instanceof ApiRequestError) {
-        setDoctorStatus(`Error ${error.status}: ${error.message}`)
-      } else if (error instanceof Error) {
-        setDoctorStatus(error.message)
-      } else {
-        setDoctorStatus('Unable to search for nearby doctors.')
-      }
+      setDoctorStatus(describeError(error, 'Unable to search for nearby doctors.'))
     } finally {
       setIsSearchingDoctors(false)
     }

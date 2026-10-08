@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { useGroupedMedicalRecords } from '../hooks/useGroupedMedicalRecords'
 import { useAuth } from '../context/useAuth'
 import { getMedicalRecord, updateMedicalRecord } from '../service/medicalRecordService'
-import { ApiRequestError } from '../lib/ApiRequestError'
+import { describeError } from '../lib/describeError'
 import type { MedicalRecord } from '../types/api'
 import {
   Alert,
@@ -51,15 +51,6 @@ function formatDate(value: string | null) {
   return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(date)
 }
 
-function describeError(error: unknown, fallback: string) {
-  if (error instanceof ApiRequestError) {
-    return `Error ${error.status}: ${error.message}`
-  }
-  if (error instanceof Error) {
-    return error.message
-  }
-  return fallback
-}
 
 type EditRecordModalProps = {
   record: MedicalRecord

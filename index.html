@@ -2,17 +2,39 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Manrope:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Envagai</title>
+    <title>Envagai: Organize Your Medical Records with AI</title>
+    <meta
+      name="description"
+      content="Upload prescriptions, lab reports and discharge notes. Envagai turns them into organized medical records, a health timeline and medication interaction checks."
+    />
+    <meta name="theme-color" content="#1c3222" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <!-- Defaults for "/". vite-plugin-seo.ts rewrites title/description/OG per pre-rendered page and injects
+         absolute URLs (canonical, og:url, og:image, JSON-LD) from VITE_SITE_URL. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Envagai" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:title" content="Envagai: Organize Your Medical Records with AI" />
+    <meta
+      property="og:description"
+      content="Turn prescriptions, lab reports and discharge notes into structured medical records, a health timeline and clear insights."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Envagai: Organize Your Medical Records with AI" />
+    <meta
+      name="twitter:description"
+      content="Turn prescriptions, lab reports and discharge notes into structured medical records, a health timeline and clear insights."
+    />
+
+    <link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin />
   </head>
   <body>
+    <noscript>
+      <p>Envagai helps you organize prescriptions, lab reports and medical records. Please enable JavaScript to use the app.</p>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../context/useAuth'
-import { ApiRequestError } from '../lib/ApiRequestError'
+import { describeError } from '../lib/describeError'
 import { documentRecordToMedicalRecord } from '../lib/documentRecordAdapter'
 import { listDocumentRecords } from '../service/documentService'
 import {
@@ -13,15 +13,6 @@ import {
 import type { ConflictResolution } from '../service/medicalRecordService'
 import type { MedicalRecord, MedicalRecordType } from '../types/api'
 
-function describeError(error: unknown, fallback: string) {
-  if (error instanceof ApiRequestError) {
-    return `Error ${error.status}: ${error.message}`
-  }
-  if (error instanceof Error) {
-    return error.message
-  }
-  return fallback
-}
 
 export function useMedicalRecords(recordType: MedicalRecordType) {
   const { request } = useAuth()

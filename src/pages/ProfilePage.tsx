@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
-import { ApiRequestError } from '../lib/ApiRequestError'
+import { useNavigate } from 'react-router-dom'
+import { describeError } from '../lib/describeError'
 import { useAuth } from '../context/useAuth'
-import { getMyProfile, updateMyProfile } from '../service/profileService'
+import { deleteMyAccount, getMyProfile, updateMyProfile } from '../service/profileService'
 import { createVitals, deleteVitals, listVitals } from '../service/vitalsService'
 import type { UserProfile, VitalsEntry } from '../types/api'
 import {
@@ -57,32 +58,31 @@ type VitalsForm = {
   blood_sugar: string
 }
 
-const emptyVitalsForm: VitalsForm = {
-  recorded_at: new Date().toISOString().slice(0, 10),
+/** Today's date in the user's own time zone (toISOString would give the UTC date, a day off in the early morning). */
+function localToday(): string {
+  const now = new Date()
+  const pad = (value: number) => String(value).padStart(2, '0')
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+}
+
+const emptyVitalsForm = (): VitalsForm => ({
+  recorded_at: localToday(),
   height: '',
   weight: '',
   blood_group: '',
   pressure: '',
   blood_sugar: '',
-}
+})
 
 function toOptionalNumber(value: string): number | undefined {
   const trimmed = value.trim()
   return trimmed ? Number(trimmed) : undefined
 }
 
-function errorMessage(error: unknown, fallback: string): string {
-  if (error instanceof ApiRequestError) {
-    return `Error ${error.status}: ${error.message}`
-  }
-  if (error instanceof Error) {
-    return error.message
-  }
-  return fallback
-}
 
 export function ProfilePage() {
-  const { request } = useAuth()
+  const { request, logout, changePassword } = useAuth()
+  const navigate = useNavigate()
 
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [form, setForm] = useState<ProfileForm>(emptyForm)
@@ -98,6 +98,15 @@ export function ProfilePage() {
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
   const [isDeletingVitals, setIsDeletingVitals] = useState(false)
 
+  const [passwordForm, setPasswordForm] = useState({ current: '', next: '', confirm: '' })
+  const [passwordStatus, setPasswordStatus] = useState('')
+  const [isChangingPassword, setIsChangingPassword] = useState(false)
+
+  const [deletePassword, setDeletePassword] = useState('')
+  const [deleteAccountStatus, setDeleteAccountStatus] = useState('')
+  const [isConfirmingAccountDelete, setIsConfirmingAccountDelete] = useState(false)
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false)
+
   const loadProfile = useCallback(async () => {
     setIsLoading(true)
     try {
@@ -106,7 +115,7 @@ export function ProfilePage() {
       setForm(toForm(data))
       setStatus('')
     } catch (error) {
-      setStatus(errorMessage(error, 'Unable to load profile'))
+      setStatus(describeError(error, 'Unable to load profile'))
     } finally {
       setIsLoading(false)
     }
@@ -118,7 +127,7 @@ export function ProfilePage() {
       const data = await listVitals(request)
       setVitalsHistory(data)
     } catch (error) {
-      setVitalsStatus(errorMessage(error, 'Unable to load vitals history'))
+      setVitalsStatus(describeError(error, 'Unable to load vitals history'))
     } finally {
       setIsVitalsLoading(false)
     }
@@ -154,7 +163,7 @@ export function ProfilePage() {
         setForm(toForm(updated))
         setStatus('Profile updated successfully.')
       } catch (error) {
-        setStatus(errorMessage(error, 'Unable to update profile'))
+        setStatus(describeError(error, 'Unable to update profile'))
       } finally {
         setIsSaving(false)
       }
@@ -183,11 +192,11 @@ export function ProfilePage() {
           pressure: vitalsForm.pressure.trim() || undefined,
           blood_sugar: toOptionalNumber(vitalsForm.blood_sugar),
         })
-        setVitalsForm(emptyVitalsForm)
+        setVitalsForm(emptyVitalsForm())
         setVitalsStatus('Vitals entry added.')
         await loadVitals()
       } catch (error) {
-        setVitalsStatus(errorMessage(error, 'Unable to add vitals entry'))
+        setVitalsStatus(describeError(error, 'Unable to add vitals entry'))
       } finally {
         setIsAddingVitals(false)
       }
@@ -205,11 +214,49 @@ export function ProfilePage() {
       setVitalsStatus('Vitals entry deleted.')
       await loadVitals()
     } catch (error) {
-      setVitalsStatus(errorMessage(error, 'Unable to delete vitals entry'))
+      setVitalsStatus(describeError(error, 'Unable to delete vitals entry'))
     } finally {
       setIsDeletingVitals(false)
     }
   }, [loadVitals, pendingDeleteId, request])
+
+  const onChangePassword = useCallback(
+    async (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault()
+      if (passwordForm.next !== passwordForm.confirm) {
+        setPasswordStatus(describeError(new Error('The new passwords do not match.')))
+        return
+      }
+
+      setIsChangingPassword(true)
+      setPasswordStatus('')
+      try {
+        await changePassword({ current_password: passwordForm.current, new_password: passwordForm.next })
+        setPasswordForm({ current: '', next: '', confirm: '' })
+        setPasswordStatus('Password updated successfully. Other devices have been signed out.')
+      } catch (error) {
+        setPasswordStatus(describeError(error, 'Unable to change your password'))
+      } finally {
+        setIsChangingPassword(false)
+      }
+    },
+    [changePassword, passwordForm],
+  )
+
+  const onConfirmDeleteAccount = useCallback(async () => {
+    setIsDeletingAccount(true)
+    setDeleteAccountStatus('')
+    try {
+      await deleteMyAccount(request, deletePassword)
+      logout()
+      navigate('/', { replace: true })
+    } catch (error) {
+      setIsConfirmingAccountDelete(false)
+      setDeleteAccountStatus(describeError(error, 'Unable to delete your account'))
+    } finally {
+      setIsDeletingAccount(false)
+    }
+  }, [deletePassword, logout, navigate, request])
 
   return (
     <div className="flex flex-1 flex-col gap-6">
@@ -350,7 +397,7 @@ export function ProfilePage() {
               maxLength={20}
             />
           </Field>
-          <Field label="Blood Sugar" htmlFor="vitals-blood-sugar">
+          <Field label="Blood Sugar (mg/dL)" htmlFor="vitals-blood-sugar">
             <Input
               id="vitals-blood-sugar"
               type="number"
@@ -387,7 +434,7 @@ export function ProfilePage() {
                   <Th>Weight (kg)</Th>
                   <Th>Blood Group</Th>
                   <Th>Pressure</Th>
-                  <Th>Blood Sugar</Th>
+                  <Th>Blood Sugar (mg/dL)</Th>
                   <Th />
                 </Tr>
               </Thead>
@@ -412,6 +459,102 @@ export function ProfilePage() {
           )}
         </div>
       </Card>
+
+      <Card>
+        <h2 className="text-base font-semibold text-gray-900">Change password</h2>
+        <p className="mt-1 text-sm text-gray-500">You'll stay signed in here; other devices will be signed out.</p>
+        <form onSubmit={onChangePassword} className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <Field label="Current password" htmlFor="current-password" required>
+            <Input
+              id="current-password"
+              type="password"
+              autoComplete="current-password"
+              value={passwordForm.current}
+              onChange={(event) => setPasswordForm((prev) => ({ ...prev, current: event.target.value }))}
+              required
+            />
+          </Field>
+          <Field label="New password" htmlFor="new-password" required hint="At least 8 characters">
+            <Input
+              id="new-password"
+              type="password"
+              autoComplete="new-password"
+              minLength={8}
+              maxLength={128}
+              value={passwordForm.next}
+              onChange={(event) => setPasswordForm((prev) => ({ ...prev, next: event.target.value }))}
+              required
+            />
+          </Field>
+          <Field label="Confirm new password" htmlFor="confirm-password" required>
+            <Input
+              id="confirm-password"
+              type="password"
+              autoComplete="new-password"
+              minLength={8}
+              maxLength={128}
+              value={passwordForm.confirm}
+              onChange={(event) => setPasswordForm((prev) => ({ ...prev, confirm: event.target.value }))}
+              required
+            />
+          </Field>
+          <div className="sm:col-span-3">
+            <Button type="submit" isLoading={isChangingPassword}>
+              {isChangingPassword ? 'Updating...' : 'Update password'}
+            </Button>
+          </div>
+        </form>
+        {passwordStatus ? (
+          <Alert tone={inferStatusTone(passwordStatus)} className="mt-4">
+            {passwordStatus}
+          </Alert>
+        ) : null}
+      </Card>
+
+      <Card className="border-red-200">
+        <h2 className="text-base font-semibold text-gray-900">Delete account</h2>
+        <p className="mt-1 text-sm text-gray-500">
+          Permanently delete your account, documents, medical records, vitals, analysis results and chats. This cannot
+          be undone.
+        </p>
+        <form
+          className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end"
+          onSubmit={(event) => {
+            event.preventDefault()
+            setDeleteAccountStatus('')
+            setIsConfirmingAccountDelete(true)
+          }}
+        >
+          <Field label="Confirm with your password" htmlFor="delete-account-password" required className="sm:w-72">
+            <Input
+              id="delete-account-password"
+              type="password"
+              autoComplete="current-password"
+              value={deletePassword}
+              onChange={(event) => setDeletePassword(event.target.value)}
+              required
+            />
+          </Field>
+          <Button type="submit" variant="dangerSolid" disabled={!deletePassword}>
+            Delete my account
+          </Button>
+        </form>
+        {deleteAccountStatus ? (
+          <Alert tone="danger" className="mt-4">
+            {deleteAccountStatus}
+          </Alert>
+        ) : null}
+      </Card>
+
+      <ConfirmDialog
+        open={isConfirmingAccountDelete}
+        title="Delete your account?"
+        description="All of your documents, records and history will be permanently deleted. This cannot be undone."
+        confirmLabel="Delete account"
+        isLoading={isDeletingAccount}
+        onConfirm={() => void onConfirmDeleteAccount()}
+        onCancel={() => setIsConfirmingAccountDelete(false)}
+      />
 
       <ConfirmDialog
         open={pendingDeleteId !== null}

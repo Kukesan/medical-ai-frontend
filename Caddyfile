@@ -1,0 +1,79 @@
+# Served by Railway via Railpack, which uses this file instead of its default SPA config
+# and fills in {{.DIST_DIR}} (the Vite output directory, /app/dist).
+{
+	admin off
+	persist_config off
+	auto_https off
+
+	log {
+		format json
+	}
+
+	servers {
+		trusted_proxies static private_ranges 100.0.0.0/8 # trust Railway's proxy
+	}
+}
+
+:{$PORT:80} {
+	log {
+		format json
+	}
+
+	respond /health 200
+
+	root * {{.DIST_DIR}}
+
+	encode zstd gzip
+
+	# CSP_CONNECT_SRC: space-separated origins the browser may call, i.e. the API and the S3 bucket used for
+	# presigned uploads, e.g. "https://api.example.com https://my-bucket.s3.us-east-1.amazonaws.com".
+	# Falls back to any https origin so a missing variable can't break the app; set it in production.
+	header {
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Frame-Options "DENY"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+		Cross-Origin-Opener-Policy "same-origin"
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' {$CSP_CONNECT_SRC:https:}; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; object-src 'none'"
+		-Server
+	}
+
+	# Caching: hashed build assets are immutable; HTML must always revalidate so deploys show up immediately.
+	@hashedAssets path /assets/*
+	header @hashedAssets Cache-Control "public, max-age=31536000, immutable"
+	@staticFiles path /fonts/* *.png *.svg
+	header @staticFiles Cache-Control "public, max-age=604800"
+	@documents not path /assets/* /fonts/* *.png *.svg
+	header @documents Cache-Control "no-cache"
+
+	# One URL per page: /index.html -> /, /about.html -> /about, /about/ -> /about (301).
+	# Plain redir directives run before rewrite/try_files, so they only ever see the URL the client requested.
+	redir /index.html / permanent
+	@htmlExtension {
+		path_regexp htmlExtension ^(/[a-z0-9-]+)\.html$
+		not path /index.html
+	}
+	redir @htmlExtension {re.htmlExtension.1} permanent
+	@trailingSlash path_regexp trailingSlash ^(.+)/$
+	redir @trailingSlash {re.trailingSlash.1} permanent
+
+	# Authenticated app routes (keep in sync with src/App.tsx): serve the client-rendered shell, never indexed.
+	@app path /dashboard /dashboard/* /timeline /timeline/* /document /document/* /analyze /analyze/* /chat /chat/* /medical-records /medical-records/* /record-intake /record-intake/* /allergy /vaccination /surgery /profile
+	header @app X-Robots-Tag "noindex, nofollow"
+	rewrite @app /spa.html
+
+	# Public pages are pre-rendered: "/about" is served from about.html.
+	try_files {path} {path}.html
+
+	file_server {
+		hide .git .env*
+	}
+
+	# Unknown URLs get a real 404 status. The body is the app shell, so React still renders the Not Found page.
+	handle_errors 404 {
+		header X-Robots-Tag "noindex"
+		rewrite * /spa.html
+		file_server
+	}
+}

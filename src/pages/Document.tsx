@@ -1,11 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { ChangeEvent, FormEvent } from 'react'
+import type { ChangeEvent, DragEvent, FormEvent } from 'react'
 import { FileText, Trash2, UploadCloud, X } from 'lucide-react'
-import { ApiRequestError } from '../lib/ApiRequestError'
+import { describeError } from '../lib/describeError'
 import { useAuth } from '../context/useAuth'
-import { deleteDocument, listDocuments, uploadDocumentsViaS3 } from '../service/documentService'
+import {
+  MAX_UPLOAD_MB,
+  UPLOAD_ACCEPT,
+  deleteDocument,
+  listDocuments,
+  uploadDocumentsViaS3,
+  validateUploadFile,
+} from '../service/documentService'
 import type { DocumentItem, UploadResult } from '../types/api'
 import { useNavigate } from 'react-router-dom'
+import { cn } from '../lib/cn'
 import {
   Alert,
   Badge,
@@ -43,6 +51,9 @@ function formatBytes(bytes: number) {
 }
 
 const MAX_FILES = 5
+/** Statuses where the backend is still working on the document, so the list should keep refreshing. */
+const PROCESSING_STATUSES = new Set(['uploaded', 'ocr_completed'])
+const POLL_INTERVAL_MS = 5000
 
 function formatDate(value: string) {
   const date = new Date(value)
@@ -69,29 +80,73 @@ export function DocumentPage() {
   const [isUploading, setIsUploading] = useState(false)
   const [pendingDeleteDocument, setPendingDeleteDocument] = useState<DocumentItem | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
 
-  const loadDocuments = useCallback(async () => {
-    setIsLoadingDocuments(true)
-    try {
-      const list = await listDocuments(request)
-      setDocuments(list)
-      setStatus('')
-    } catch (error) {
-      if (error instanceof ApiRequestError) {
-        setStatus(`Error ${error.status}: ${error.message}`)
-      } else if (error instanceof Error) {
-        setStatus(error.message)
-      } else {
-        setStatus('Unable to load documents')
+  /** `silent` refreshes (background polling) skip the loading skeleton. */
+  const loadDocuments = useCallback(
+    async ({ silent = false }: { silent?: boolean } = {}) => {
+      if (!silent) {
+        setIsLoadingDocuments(true)
       }
-    } finally {
-      setIsLoadingDocuments(false)
-    }
-  }, [request])
+      try {
+        const list = await listDocuments(request)
+        setDocuments(list)
+        if (!silent) {
+          setStatus('')
+        }
+      } catch (error) {
+        if (!silent) {
+          setStatus(describeError(error, 'Unable to load documents'))
+        }
+      } finally {
+        if (!silent) {
+          setIsLoadingDocuments(false)
+        }
+      }
+    },
+    [request],
+  )
 
   useEffect(() => {
     void loadDocuments()
   }, [loadDocuments])
+
+  // Keep statuses current while documents are being processed, instead of making the user click Refresh.
+  const hasProcessingDocuments = documents.some((doc) => PROCESSING_STATUSES.has(doc.processing_status))
+  useEffect(() => {
+    if (!hasProcessingDocuments) {
+      return
+    }
+    const timer = window.setInterval(() => void loadDocuments({ silent: true }), POLL_INTERVAL_MS)
+    return () => window.clearInterval(timer)
+  }, [hasProcessingDocuments, loadDocuments])
+
+  const addFiles = useCallback(
+    (chosen: File[]) => {
+      if (chosen.length === 0) {
+        return
+      }
+
+      const problems: string[] = []
+      const valid = chosen.filter((file) => {
+        const reason = validateUploadFile(file)
+        if (reason) {
+          problems.push(`${file.name}: ${reason}`)
+        }
+        return !reason
+      })
+
+      let combined = [...selectedFiles, ...valid]
+      if (combined.length > MAX_FILES) {
+        combined = combined.slice(0, MAX_FILES)
+        problems.push(`You can upload up to ${MAX_FILES} files at once. Only the first ${MAX_FILES} were kept.`)
+      }
+
+      setSelectedFiles(combined)
+      setStatus(problems.length > 0 ? describeError(new Error(problems.join(' '))) : '')
+    },
+    [selectedFiles],
+  )
 
   const onFileChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
@@ -99,22 +154,25 @@ export function DocumentPage() {
       if (fileInputRef.current) {
         fileInputRef.current.value = ''
       }
-      if (chosen.length === 0) {
-        return
-      }
-
-      const combined = [...selectedFiles, ...chosen]
-
-      if (combined.length > MAX_FILES) {
-        setSelectedFiles(combined.slice(0, MAX_FILES))
-        setStatus(`You can upload up to ${MAX_FILES} files at once. Only the first ${MAX_FILES} were kept.`)
-        return
-      }
-
-      setSelectedFiles(combined)
-      setStatus('')
+      addFiles(chosen)
     },
-    [selectedFiles],
+    [addFiles],
+  )
+
+  const onDragOver = useCallback((event: DragEvent<HTMLLabelElement>) => {
+    event.preventDefault()
+    setIsDragging(true)
+  }, [])
+
+  const onDragLeave = useCallback(() => setIsDragging(false), [])
+
+  const onDrop = useCallback(
+    (event: DragEvent<HTMLLabelElement>) => {
+      event.preventDefault()
+      setIsDragging(false)
+      addFiles(Array.from(event.dataTransfer.files))
+    },
+    [addFiles],
   )
 
   const removeSelectedFile = useCallback((index: number) => {
@@ -146,13 +204,7 @@ export function DocumentPage() {
 
         await loadDocuments()
       } catch (error) {
-        if (error instanceof ApiRequestError) {
-          setStatus(`Error ${error.status}: ${error.message}`)
-        } else if (error instanceof Error) {
-          setStatus(error.message)
-        } else {
-          setStatus('Upload failed')
-        }
+        setStatus(describeError(error, 'Upload failed'))
       } finally {
         setIsUploading(false)
       }
@@ -171,13 +223,7 @@ export function DocumentPage() {
       setPendingDeleteDocument(null)
       await loadDocuments()
     } catch (error) {
-      if (error instanceof ApiRequestError) {
-        setStatus(`Error ${error.status}: ${error.message}`)
-      } else if (error instanceof Error) {
-        setStatus(error.message)
-      } else {
-        setStatus('Failed to delete document')
-      }
+      setStatus(describeError(error, 'Failed to delete document'))
     } finally {
       setIsDeleting(false)
     }
@@ -185,25 +231,37 @@ export function DocumentPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-6">
-      <PageHeader title="Document Upload" description="Upload one or more medical documents using the secure API endpoint." />
+      <PageHeader
+        title="Upload Documents"
+        description="Add prescriptions, lab reports and discharge notes. We'll extract the key details for you to review."
+      />
 
       <Card>
         <form className="flex flex-col gap-4" onSubmit={onUpload}>
           <label
             htmlFor="document-files"
-            className="flex cursor-pointer flex-col items-center gap-1.5 rounded-lg border border-dashed border-gray-300 bg-gray-50/50 px-6 py-10 text-center transition-colors hover:border-primary-400 hover:bg-primary-50/40 focus-within:border-primary-500 focus-within:ring-4 focus-within:ring-primary-500/10"
+            onDragOver={onDragOver}
+            onDragLeave={onDragLeave}
+            onDrop={onDrop}
+            className={cn(
+              isDragging && 'border-primary-500 bg-primary-50/60',
+              'flex cursor-pointer flex-col items-center gap-1.5 rounded-lg border border-dashed border-gray-300 bg-gray-50/50 px-6 py-10 text-center transition-colors hover:border-primary-400 hover:bg-primary-50/40 focus-within:border-primary-500 focus-within:ring-4 focus-within:ring-primary-500/10',
+            )}
           >
             <span className="mb-1 flex h-10 w-10 items-center justify-center rounded-lg bg-white text-primary-600 shadow-card ring-1 ring-gray-200/80">
               <UploadCloud className="h-5 w-5" />
             </span>
             <span className="text-sm font-semibold text-gray-800">Click to choose files, or drag them here</span>
-            <span className="text-xs text-gray-500">Up to {MAX_FILES} files at once</span>
+            <span className="text-xs text-gray-500">
+              PDF, PNG or JPEG · up to {MAX_UPLOAD_MB} MB each · {MAX_FILES} files at once
+            </span>
             <input
               ref={fileInputRef}
               id="document-files"
               type="file"
               name="files"
               multiple
+              accept={UPLOAD_ACCEPT}
               className="sr-only"
               onChange={onFileChange}
             />
@@ -251,7 +309,10 @@ export function DocumentPage() {
         {uploadResult && uploadResult.uploaded.length > 0 ? (
           <Alert tone="success" className="mt-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <span>Please wait while your documents finish uploading and processing before analyzing them.</span>
+              <span>
+                Upload complete. Your documents are being processed; their status below updates automatically. Once
+                they show Pending Review, open each one to check the extracted details.
+              </span>
               <Button size="sm" onClick={() => void navigate('/analyze')}>
                 Go to Analyze
               </Button>

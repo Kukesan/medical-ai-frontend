@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { ApiRequestError } from '../lib/ApiRequestError'
+import { describeError } from '../lib/describeError'
 
 export function useAsyncTask(initialStatus: string) {
   const [status, setStatus] = useState(initialStatus)
@@ -10,13 +10,7 @@ export function useAsyncTask(initialStatus: string) {
     try {
       await task()
     } catch (error) {
-      if (error instanceof ApiRequestError) {
-        setStatus(`Error ${error.status}: ${error.message}`)
-      } else if (error instanceof Error) {
-        setStatus(error.message)
-      } else {
-        setStatus('Unknown error')
-      }
+      setStatus(describeError(error, 'Unknown error'))
     } finally {
       setIsLoading(false)
     }

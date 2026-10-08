@@ -58,13 +58,20 @@ function createFetchWithAuth({ apiBase, getAccessToken, refreshTokens, logout }:
       })
     }
 
-    let response = await runFetch(getAccessToken())
+    const sentToken = getAccessToken()
+    let response = await runFetch(sentToken)
     if (response.status === 401 && auth) {
-      const refreshed = await refreshTokens()
-      if (refreshed) {
-        response = await runFetch(refreshed.access_token)
+      const currentToken = getAccessToken()
+      if (currentToken && currentToken !== sentToken) {
+        // Another request already refreshed while this one was in flight: just retry with the new token.
+        response = await runFetch(currentToken)
       } else {
-        logout()
+        const refreshed = await refreshTokens()
+        if (refreshed) {
+          response = await runFetch(refreshed.access_token)
+        } else {
+          logout()
+        }
       }
     }
 

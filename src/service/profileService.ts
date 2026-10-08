@@ -12,6 +12,14 @@ export type UpdateProfilePayload = {
   notes?: string
 }
 
+/** Permanently deletes the account and all of its data. The backend re-checks the password. */
+export function deleteMyAccount(request: AuthRequest, password: string) {
+  return request<void>('/users/me', {
+    method: 'DELETE',
+    body: JSON.stringify({ password }),
+  })
+}
+
 export function updateMyProfile(request: AuthRequest, payload: UpdateProfilePayload) {
   return request<UserProfile>('/users/me/profile', {
     method: 'PUT',

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, CheckCircle2, Pencil } from 'lucide-react'
-import { ApiRequestError } from '../lib/ApiRequestError'
+import { describeError } from '../lib/describeError'
 import { useAuth } from '../context/useAuth'
 import { acceptDocument, getDocument, updateDocumentExtraction } from '../service/documentService'
 import type { DocumentDetails } from '../types/api'
@@ -10,16 +10,10 @@ import { ExtractionEditor } from '../components/document/ExtractionEditor'
 import type { JsonValue } from '../components/document/jsonValue'
 
 const NOT_YET_EXTRACTED = new Set(['uploaded', 'ocr_completed', 'failed'])
+const PROCESSING = new Set(['uploaded', 'ocr_completed'])
+const POLL_INTERVAL_MS = 5000
+const DISCARD_CHANGES_PROMPT = 'You have unsaved changes to the extracted data. Discard them?'
 
-function describeError(error: unknown, fallback: string): string {
-  if (error instanceof ApiRequestError) {
-    return `Error ${error.status}: ${error.message}`
-  }
-  if (error instanceof Error) {
-    return error.message
-  }
-  return fallback
-}
 
 function formatDateTime(value: string) {
   const date = new Date(value)
@@ -32,6 +26,7 @@ function formatDateTime(value: string) {
 export function DocumentDetailsPage() {
   const { request } = useAuth()
   const { documentId } = useParams<{ documentId: string }>()
+  const navigate = useNavigate()
 
   const [doc, setDoc] = useState<DocumentDetails | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -41,42 +36,83 @@ export function DocumentDetailsPage() {
   const [editValue, setEditValue] = useState<{ [key: string]: JsonValue }>({})
   const [isSaving, setIsSaving] = useState(false)
   const [isAccepting, setIsAccepting] = useState(false)
+  const [isDirty, setIsDirty] = useState(false)
 
-  const loadDetails = useCallback(async () => {
-    if (!documentId) {
-      setStatus('Document id is missing.')
-      setIsLoading(false)
-      return
-    }
+  const loadDetails = useCallback(
+    async ({ silent = false }: { silent?: boolean } = {}) => {
+      if (!documentId) {
+        setStatus('Document id is missing.')
+        setIsLoading(false)
+        return
+      }
 
-    setIsLoading(true)
-    setStatus('')
+      if (!silent) {
+        setIsLoading(true)
+        setStatus('')
+      }
 
-    try {
-      const response = await getDocument(request, documentId)
-      setDoc(response)
-    } catch (error) {
-      setDoc(null)
-      setStatus(describeError(error, 'Unable to load document details'))
-    } finally {
-      setIsLoading(false)
-    }
-  }, [documentId, request])
+      try {
+        const response = await getDocument(request, documentId)
+        setDoc(response)
+      } catch (error) {
+        if (!silent) {
+          setDoc(null)
+          setStatus(describeError(error, 'Unable to load document details'))
+        }
+      } finally {
+        if (!silent) {
+          setIsLoading(false)
+        }
+      }
+    },
+    [documentId, request],
+  )
 
   useEffect(() => {
     void loadDetails()
   }, [loadDetails])
 
+  // While the document is still being processed, check back periodically so the extracted data appears by itself.
+  const isProcessing = doc ? PROCESSING.has(doc.processing_status) : false
+  useEffect(() => {
+    if (!isProcessing) {
+      return
+    }
+    const timer = window.setInterval(() => void loadDetails({ silent: true }), POLL_INTERVAL_MS)
+    return () => window.clearInterval(timer)
+  }, [isProcessing, loadDetails])
+
+  // Warn before closing or reloading the tab with unsaved edits.
+  const hasUnsavedChanges = isEditing && isDirty
+  useEffect(() => {
+    if (!hasUnsavedChanges) {
+      return
+    }
+    const onBeforeUnload = (event: BeforeUnloadEvent) => event.preventDefault()
+    window.addEventListener('beforeunload', onBeforeUnload)
+    return () => window.removeEventListener('beforeunload', onBeforeUnload)
+  }, [hasUnsavedChanges])
+
   const startEdit = useCallback(() => {
     if (!doc) return
     setEditValue((doc.extraction_result as { [key: string]: JsonValue } | null) ?? {})
     setIsEditing(true)
+    setIsDirty(false)
     setStatus('')
   }, [doc])
 
   const cancelEdit = useCallback(() => {
+    if (isDirty && !window.confirm(DISCARD_CHANGES_PROMPT)) {
+      return
+    }
     setIsEditing(false)
+    setIsDirty(false)
     setEditValue({})
+  }, [isDirty])
+
+  const onEditChange = useCallback((next: { [key: string]: JsonValue }) => {
+    setEditValue(next)
+    setIsDirty(true)
   }, [])
 
   const submitEdit = useCallback(async () => {
@@ -89,6 +125,7 @@ export function DocumentDetailsPage() {
       const response = await updateDocumentExtraction(request, documentId, editValue)
       setDoc(response)
       setIsEditing(false)
+      setIsDirty(false)
       setEditValue({})
       setStatus('Extracted data saved.')
     } catch (error) {
@@ -121,7 +158,15 @@ export function DocumentDetailsPage() {
   return (
     <div className="flex flex-1 flex-col gap-6">
       <div className="flex flex-col items-start gap-3">
-        <Link to="/document" className={buttonClassName('ghost', 'sm', '-ml-2')}>
+        <Link
+          to="/document"
+          className={buttonClassName('ghost', 'sm', '-ml-2')}
+          onClick={(event) => {
+            if (hasUnsavedChanges && !window.confirm(DISCARD_CHANGES_PROMPT)) {
+              event.preventDefault()
+            }
+          }}
+        >
           <ArrowLeft className="h-4 w-4" />
           Back to Documents
         </Link>
@@ -129,7 +174,6 @@ export function DocumentDetailsPage() {
           <h1 className="break-words text-2xl font-bold tracking-tight text-gray-900">
             {doc?.file_name ?? 'Document Details'}
           </h1>
-          {documentId ? <p className="mt-1 font-mono text-xs text-gray-400">ID: {documentId}</p> : null}
         </div>
       </div>
 
@@ -209,13 +253,27 @@ export function DocumentDetailsPage() {
             )}
           </div>
 
-          {!canReview && !isEditing ? (
-            <p className="mt-3 text-sm text-gray-500">Extraction has not completed yet — data will appear here once processing finishes.</p>
+          {doc.processing_status === 'failed' ? (
+            <Alert tone="danger" className="mt-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <span>
+                  We couldn't read this document. Make sure the file is a clear, readable scan or photo, then delete it
+                  and upload it again.
+                </span>
+                <Button size="sm" variant="secondary" onClick={() => navigate('/document')}>
+                  Back to Documents
+                </Button>
+              </div>
+            </Alert>
+          ) : !canReview && !isEditing ? (
+            <p className="mt-3 text-sm text-gray-500">
+              Your document is still being processed. This page updates automatically once the details are ready.
+            </p>
           ) : null}
 
           <div className="mt-5">
             {isEditing ? (
-              <ExtractionEditor data={editValue} editable onChange={setEditValue} />
+              <ExtractionEditor data={editValue} editable onChange={onEditChange} />
             ) : (
               <ExtractionEditor
                 data={doc.extraction_result as { [key: string]: JsonValue } | null}

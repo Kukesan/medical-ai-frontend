@@ -3,18 +3,18 @@ import { Badge } from './Badge'
 import type { BadgeTone } from './Badge'
 
 const statusLabels: Record<ProcessingStatus, string> = {
-  uploaded: 'Uploaded',
-  ocr_completed: 'OCR Completed',
+  uploaded: 'Processing',
+  ocr_completed: 'Processing',
   extracted: 'Pending Review',
   analyzed: 'Analyzed',
   user_edited: 'Edited',
   accepted: 'Accepted',
-  failed: 'Failed',
+  failed: 'Processing failed',
 }
 
 const statusTones: Record<ProcessingStatus, BadgeTone> = {
-  uploaded: 'neutral',
-  ocr_completed: 'neutral',
+  uploaded: 'primary',
+  ocr_completed: 'primary',
   extracted: 'warning',
   analyzed: 'neutral',
   user_edited: 'primary',

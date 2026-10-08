@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../context/useAuth'
 import { ApiRequestError } from '../lib/ApiRequestError'
+import { describeError } from '../lib/describeError'
 import { parseFieldErrors } from '../lib/parseFieldErrors'
 import { getMedicalRecord, resolveMedicalRecordConflict, verifyMedicalRecord } from '../service/medicalRecordService'
 import type { ConflictResolution } from '../service/medicalRecordService'
@@ -20,15 +21,6 @@ export type IntakeTranscriptEntry = {
   answer: string
 }
 
-function describeError(error: unknown, fallback: string) {
-  if (error instanceof ApiRequestError) {
-    return `Error ${error.status}: ${error.message}`
-  }
-  if (error instanceof Error) {
-    return error.message
-  }
-  return fallback
-}
 
 function persistIntakeId(intakeId: string | null) {
   if (intakeId) {

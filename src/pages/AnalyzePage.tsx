@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AlertTriangle, Brain, Calendar, ChevronRight, Gauge, Layers, ShieldAlert, Stethoscope } from 'lucide-react'
 import type { AnalysisResultListItem, AnalysisRiskLevel } from '../types/api'
-import { ApiRequestError } from '../lib/ApiRequestError'
+import { describeError } from '../lib/describeError'
 import { useAuth } from '../context/useAuth'
 import { analyzeMedicationInteractions, getAnalysisResults } from '../service/analysisService'
 import { Alert, Badge, Button, Card, EmptyState, PageHeader, SkeletonLines, riskTone } from '../components/ui'
@@ -63,13 +63,7 @@ export function AnalyzePage() {
       const response = await getAnalysisResults(request)
       setResults(Array.isArray(response) ? response.filter((item): item is AnalysisResultListItem => Boolean(item)) : [])
     } catch (error) {
-      if (error instanceof ApiRequestError) {
-        setStatus(`Error ${error.status}: ${error.message}`)
-      } else if (error instanceof Error) {
-        setStatus(error.message)
-      } else {
-        setStatus('Unable to load analysis reports.')
-      }
+      setStatus(describeError(error, 'Unable to load analysis reports.'))
       setResults([])
     } finally {
       setIsLoading(false)
@@ -88,13 +82,7 @@ export function AnalyzePage() {
       await analyzeMedicationInteractions(request)
       await loadResults()
     } catch (error) {
-      if (error instanceof ApiRequestError) {
-        setAnalyzeStatus(`Error ${error.status}: ${error.message}`)
-      } else if (error instanceof Error) {
-        setAnalyzeStatus(error.message)
-      } else {
-        setAnalyzeStatus('Unable to analyze medication interactions.')
-      }
+      setAnalyzeStatus(describeError(error, 'Unable to analyze medication interactions.'))
     } finally {
       setIsAnalyzing(false)
     }

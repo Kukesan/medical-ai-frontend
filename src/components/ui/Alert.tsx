@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { AlertCircle, AlertTriangle, CheckCircle2, Info } from 'lucide-react'
 import { cn } from '../../lib/cn'
+import { isKnownErrorMessage } from '../../lib/describeError'
 
 export type AlertTone = 'info' | 'success' | 'warning' | 'danger'
 
@@ -25,7 +26,7 @@ export function Alert({ tone = 'info', children, className }: { tone?: AlertTone
 export function inferStatusTone(message: string): AlertTone {
   const lower = message.toLowerCase()
 
-  if (lower.startsWith('error') || lower.includes('unable to') || lower.includes('failed') || lower.includes('fail')) {
+  if (isKnownErrorMessage(message) || lower.startsWith('error') || lower.includes('unable to') || lower.includes('failed') || lower.includes('fail')) {
     return 'danger'
   }
 

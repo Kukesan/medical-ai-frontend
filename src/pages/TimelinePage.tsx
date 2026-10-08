@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Clock } from 'lucide-react'
-import { ApiRequestError } from '../lib/ApiRequestError'
+import { describeError } from '../lib/describeError'
 import { useAuth } from '../context/useAuth'
 import { listTimeline } from '../service/timelineService'
 import type { TimelineEntry } from '../types/api'
@@ -32,13 +32,7 @@ export function TimelinePage() {
       setEntries(sorted)
       setStatus('')
     } catch (error) {
-      if (error instanceof ApiRequestError) {
-        setStatus(`Error ${error.status}: ${error.message}`)
-      } else if (error instanceof Error) {
-        setStatus(error.message)
-      } else {
-        setStatus('Unable to load timeline')
-      }
+      setStatus(describeError(error, 'Unable to load timeline'))
     } finally {
       setIsLoading(false)
     }

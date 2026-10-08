@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { MessageCircle, Plus, Send } from 'lucide-react'
-import { ApiRequestError } from '../lib/ApiRequestError'
+import { describeError } from '../lib/describeError'
 import { useAuth } from '../context/useAuth'
 import { askChatQuestion, getChatHistory, getConversations } from '../service/chatService'
 import { listDocuments } from '../service/documentService'
@@ -137,11 +137,7 @@ export function ChatPage() {
         if (cancelled) {
           return
         }
-        if (error instanceof ApiRequestError) {
-          setStatus(`Error ${error.status}: ${error.message}`)
-        } else if (error instanceof Error) {
-          setStatus(error.message)
-        }
+        setStatus(describeError(error))
       })
       .finally(() => {
         if (!cancelled) {
@@ -211,13 +207,7 @@ export function ChatPage() {
 
         loadConversations()
       } catch (error) {
-        if (error instanceof ApiRequestError) {
-          setStatus(`Error ${error.status}: ${error.message}`)
-        } else if (error instanceof Error) {
-          setStatus(error.message)
-        } else {
-          setStatus('Unable to send your message')
-        }
+        setStatus(describeError(error, 'Unable to send your message'))
       } finally {
         setIsSending(false)
       }

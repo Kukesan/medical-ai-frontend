@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import {
   Brain,
@@ -16,6 +16,8 @@ import {
 import { useAuth } from "../context/useAuth";
 import { cn } from "../lib/cn";
 import { Brand } from "./EnvagaiLogo";
+import { Spinner } from "./ui";
+import { usePageMeta } from "../lib/seo";
 
 const navGroups = [
   {
@@ -49,19 +51,20 @@ const navGroups = [
   },
 ];
 
-// const pageTitles: Array<[string, string]> = [
-//   ["/dashboard", "Dashboard"],
-//   ["/timeline", "Timeline"],
-//   ["/record-intake", "Add Record"],
-//   ["/document", "Documents"],
-//   ["/medical-records", "Medical Records"],
-//   ["/analyze", "Analysis"],
-//   ["/allergy", "Allergies"],
-//   ["/vaccination", "Vaccinations"],
-//   ["/surgery", "Surgeries"],
-//   ["/chat", "Chat"],
-//   ["/profile", "Profile"],
-// ];
+// Tab titles for routes outside the sidebar; everything else uses its nav label.
+const extraPageTitles: Array<[string, string]> = [
+  ["/allergy", "Allergies"],
+  ["/vaccination", "Vaccinations"],
+  ["/surgery", "Surgeries"],
+];
+
+function getPageTitle(pathname: string) {
+  const entries: Array<[string, string]> = [
+    ...navGroups.flatMap((group) => group.items.map((item): [string, string] => [item.to, item.label])),
+    ...extraPageTitles,
+  ];
+  return entries.find(([path]) => pathname === path || pathname.startsWith(`${path}/`))?.[1];
+}
 
 const logoutButtonClass =
   "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-white/70 transition-colors hover:bg-white/5 hover:text-white";
@@ -105,6 +108,9 @@ export function AppLayout() {
   const { user, logout } = useAuth();
   const location = useLocation();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+
+  // Everything behind login is private health data: never index it.
+  usePageMeta({ title: getPageTitle(location.pathname), noindex: true });
 
   useEffect(() => {
     setIsMobileNavOpen(false);
@@ -202,7 +208,15 @@ export function AppLayout() {
 
         <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
           <div className="mx-auto max-w-7xl">
-            <Outlet />
+            <Suspense
+              fallback={
+                <div className="flex min-h-[40vh] items-center justify-center text-gray-400">
+                  <Spinner className="h-6 w-6" />
+                </div>
+              }
+            >
+              <Outlet />
+            </Suspense>
           </div>
         </main>
       </div>

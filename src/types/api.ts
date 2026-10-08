@@ -84,11 +84,8 @@ export type ConfirmUploadResponse = {
 
 export type BatchConfirmUploadResponse = {
   documents: ConfirmUploadResponse[]
-  failed: Array<{
-    document_id?: string
-    reason?: string
-    error?: string
-  }>
+  /** Ids of documents that could not be confirmed (missing from storage, too large or wrong type). */
+  failed: string[]
 }
 
 export type AnalysisRunResponse = {

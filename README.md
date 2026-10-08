@@ -80,6 +80,14 @@ The page includes a visible step tracker so operators can confirm each stage com
 - Configure your deployment environment to inject `VITE_API_ORIGIN`.
 - Consider adding observability, feature flags, and test coverage before go-live.
 
+## SEO & Deployment (Railway)
+
+- **Site origin:** set `VITE_SITE_URL=https://${{RAILWAY_PUBLIC_DOMAIN}}` (or your custom domain) as a Railway service variable. If unset, the build falls back to `RAILWAY_PUBLIC_DOMAIN`; with neither, canonical/OG/JSON-LD/sitemap are omitted.
+- **Pre-rendering:** [vite-plugin-seo.ts](vite-plugin-seo.ts) renders the public pages listed in [src/lib/publicPages.ts](src/lib/publicPages.ts) (`/`, `/auth`, `/about`, `/privacy`, `/terms`) to static HTML at build time with per-page title, description, canonical and Open Graph tags, and writes `robots.txt`, `sitemap.xml` and `spa.html` (the noindex app shell).
+- **Serving:** Railpack uses the project's [Caddyfile](Caddyfile): pre-rendered pages are served extension-less, authenticated routes get the app shell with `X-Robots-Tag: noindex`, unknown URLs return a real **404**, and `/about/`, `/about.html`, `/index.html` 301 to their canonical URL.
+- **Adding a route:** public → add it to `PUBLIC_PAGES` and `src/App.tsx` (import eagerly). Private → add it to `src/App.tsx`, `PRIVATE_PATH_PREFIXES` in the plugin, and the `@app` matcher in the Caddyfile.
+- **Operator details:** set `SITE_OPERATOR.contactEmail` in `src/lib/publicPages.ts` once a support inbox exists; it appears on About/Privacy/Terms automatically.
+
 ## Notes
 
 - By default, the API base path is `/api/v1` and is appended automatically.

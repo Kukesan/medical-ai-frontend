@@ -8,7 +8,7 @@ import {
   Stethoscope,
   type LucideIcon,
 } from 'lucide-react'
-import { ApiRequestError } from '../lib/ApiRequestError'
+import { describeError } from '../lib/describeError'
 import { useAuth } from '../context/useAuth'
 import { getAlerts } from '../service/dashboardService'
 import { listVitals } from '../service/vitalsService'
@@ -74,25 +74,21 @@ export function DashboardPage() {
 
   const loadDashboard = useCallback(async () => {
     setIsLoading(true)
-    try {
-      const [alertList, vitalsHistory] = await Promise.all([getAlerts(request), listVitals(request)])
+    // Load independently: if one section fails, the other still shows.
+    const [alertsResult, vitalsResult] = await Promise.allSettled([getAlerts(request), listVitals(request)])
 
-      setAlerts(alertList)
-      setLatestVitals(
-        [...vitalsHistory].sort((a, b) => b.recorded_at.localeCompare(a.recorded_at))[0] ?? null,
-      )
-      setStatus('')
-    } catch (error) {
-      if (error instanceof ApiRequestError) {
-        setStatus(`Error ${error.status}: ${error.message}`)
-      } else if (error instanceof Error) {
-        setStatus(error.message)
-      } else {
-        setStatus('Unable to load dashboard')
-      }
-    } finally {
-      setIsLoading(false)
+    if (alertsResult.status === 'fulfilled') {
+      setAlerts(alertsResult.value)
     }
+    if (vitalsResult.status === 'fulfilled') {
+      setLatestVitals(
+        [...vitalsResult.value].sort((a, b) => b.recorded_at.localeCompare(a.recorded_at))[0] ?? null,
+      )
+    }
+
+    const firstFailure = [alertsResult, vitalsResult].find((result) => result.status === 'rejected')
+    setStatus(firstFailure ? describeError(firstFailure.reason, 'Some dashboard data could not be loaded') : '')
+    setIsLoading(false)
   }, [request])
 
   useEffect(() => {
@@ -178,7 +174,7 @@ export function DashboardPage() {
                   <dd className="mt-0.5 text-sm font-semibold text-gray-900">{latestVitals.pressure ?? '-'}</dd>
                 </div>
                 <div className="rounded-lg bg-gray-50 px-3 py-2.5">
-                  <dt className="text-xs text-gray-500">Blood Sugar</dt>
+                  <dt className="text-xs text-gray-500">Blood Sugar (mg/dL)</dt>
                   <dd className="mt-0.5 text-sm font-semibold text-gray-900">{latestVitals.blood_sugar ?? '-'}</dd>
                 </div>
               </dl>
