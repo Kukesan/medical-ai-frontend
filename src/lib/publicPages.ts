@@ -30,12 +30,12 @@ export const SITE_OPERATOR = {
 }
 
 const HOME_DESCRIPTION =
-  'Upload prescriptions, lab reports and discharge notes. Envagai turns them into organized medical records, a health timeline and medication interaction checks.'
+  'Upload prescriptions and lab reports. Envagai extracts key details, checks medication interactions, answers your questions and keeps your health timeline private.'
 
 export const PUBLIC_PAGES: PublicPage[] = [
   {
     path: '/',
-    title: 'Envagai: Organize Your Medical Records with AI',
+    title: 'Envagai: Understand Your Medical Reports and Records with AI',
     description: HOME_DESCRIPTION,
     inSitemap: true,
   },
@@ -67,6 +67,16 @@ export const PUBLIC_PAGES: PublicPage[] = [
       'The terms for using Envagai, including that it provides information only and is not a substitute for professional medical advice, diagnosis or treatment.',
     inSitemap: true,
   },
+]
+
+export type NavItem = { href: string; label: string }
+
+/** Landing page sections, linked from the header and footer of every public page. */
+export const LANDING_SECTIONS: NavItem[] = [
+  { href: '/#features', label: 'Features' },
+  { href: '/#how-it-works', label: 'How it works' },
+  { href: '/#safety', label: 'Safety & privacy' },
+  { href: '/#faq', label: 'FAQ' },
 ]
 
 export function getPublicPage(path: string) {
